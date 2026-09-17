@@ -22,6 +22,7 @@
     --key-white-border: #ccccc7;
     --key-black: #2a2a28;
     --key-active: #1f6b3f;
+    --key-in-pattern: #d9776b;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -41,6 +42,7 @@
       --key-white-border: #444a50;
       --key-black: #0d0f11;
       --key-active: #6fcf97;
+      --key-in-pattern: #b3453a;
     }
   }
 
@@ -152,7 +154,7 @@
 
   .tap-btn {
     background: var(--accent-strong);
-    color: var(--accent-text) !important;
+    color: #ffffff !important;
     border: none;
     border-radius: 6px;
     padding: 8px 14px;
@@ -288,6 +290,10 @@
     position: relative;
   }
 
+  .white-key.in-pattern {
+    background: var(--key-in-pattern) !important;
+  }
+
   .white-key.active {
     background: var(--key-active) !important;
   }
@@ -311,6 +317,10 @@
     top: 0;
     border-radius: 0 0 3px 3px;
     z-index: 2;
+  }
+
+  .black-key.in-pattern {
+    background: var(--key-in-pattern) !important;
   }
 
   .black-key.active {
@@ -578,6 +588,7 @@ function clearHighlights() {
   highlightTimeouts.forEach(t => clearTimeout(t));
   highlightTimeouts = [];
   document.querySelectorAll(".white-key.active, .black-key.active").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".white-key.in-pattern, .black-key.in-pattern").forEach(el => el.classList.remove("in-pattern"));
 }
 
 function stopPlayback() {
@@ -601,6 +612,24 @@ function highlightKeyAt(midi, delayMs, durMs) {
   const t2 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
     if (el) el.classList.remove("active");
+  }, Math.max(0, delayMs) + durMs);
+  highlightTimeouts.push(t1, t2);
+}
+
+// mark/unmark a set of keys as "in the current step's pattern" (red), at a given
+// delay, for a given duration - shows the shape of the whole step ahead of time
+function markPatternAt(midis, delayMs, durMs) {
+  const t1 = setTimeout(() => {
+    midis.forEach(m => {
+      const el = document.querySelector('.key[data-midi="' + m + '"]');
+      if (el) el.classList.add("in-pattern");
+    });
+  }, Math.max(0, delayMs));
+  const t2 = setTimeout(() => {
+    midis.forEach(m => {
+      const el = document.querySelector('.key[data-midi="' + m + '"]');
+      if (el) el.classList.remove("in-pattern");
+    });
   }, Math.max(0, delayMs) + durMs);
   highlightTimeouts.push(t1, t2);
 }
@@ -659,8 +688,13 @@ async function playSlot(slotIndex) {
   let t = ctx.currentTime + 0.15;
 
   function scheduleStep(rootMidi) {
-    // chord: quarter note, rings fully, no added silence before or after
     const chordTones = [0,4,7].map(iv => rootMidi + iv);
+    const arpMidis = semis.map(iv => rootMidi + iv);
+    const lastMidi = rootMidi + semis[semis.length - 1];
+    const allStepMidis = Array.from(new Set([...chordTones, ...arpMidis, lastMidi]));
+    const stepStartTime = t;
+
+    // chord: quarter note, rings fully, no added silence before or after
     chordTones.forEach(m => scheduleNotePlayback(m, t, chordDur, myToken));
     const chordName = midiToSampleName(rootMidi);
     const chordDelay = (t - ctx.currentTime) * 1000;
@@ -668,7 +702,7 @@ async function playSlot(slotIndex) {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
     }, Math.max(0, chordDelay)));
-    chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
+    highlightKeyAt(rootMidi, chordDelay, chordDur * 1000);
     t += chordDur;
 
     // arpeggio: eighth notes, immediately after chord
@@ -686,11 +720,15 @@ async function playSlot(slotIndex) {
     });
 
     // repeat last arpeggio note once (eighth note), then straight into next chord
-    const lastMidi = rootMidi + semis[semis.length - 1];
     scheduleNotePlayback(lastMidi, t, noteDur, myToken);
     const lastDelay = (t - ctx.currentTime) * 1000;
     highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
     t += noteDur;
+
+    // show the whole step's note-shape in red for the step's full duration
+    const stepDelay = (stepStartTime - ctx.currentTime) * 1000;
+    const stepDurMs = (t - stepStartTime) * 1000;
+    markPatternAt(allStepMidis, stepDelay, stepDurMs);
   }
 
   for (let root = lowMidi; root <= highMidi; root++) {
