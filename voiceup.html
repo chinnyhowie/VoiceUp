@@ -23,6 +23,8 @@
     --key-black: #2a2a28;
     --key-active: #1f6b3f;
     --key-in-pattern: #d9776b;
+    --key-active-outline: #ffffff;
+    --key-in-pattern-outline: #7a2e24;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -43,6 +45,8 @@
       --key-black: #0d0f11;
       --key-active: #6fcf97;
       --key-in-pattern: #b3453a;
+      --key-active-outline: #0d0f11;
+      --key-in-pattern-outline: #f2c4bd;
     }
   }
 
@@ -292,10 +296,12 @@
 
   .white-key.in-pattern {
     background: var(--key-in-pattern) !important;
+    box-shadow: inset 0 0 0 2px var(--key-in-pattern-outline);
   }
 
   .white-key.active {
     background: var(--key-active) !important;
+    box-shadow: inset 0 0 0 2px var(--key-active-outline);
   }
 
   .white-key .label {
@@ -321,10 +327,12 @@
 
   .black-key.in-pattern {
     background: var(--key-in-pattern) !important;
+    box-shadow: inset 0 0 0 2px var(--key-in-pattern-outline);
   }
 
   .black-key.active {
     background: var(--key-active) !important;
+    box-shadow: inset 0 0 0 2px var(--key-active-outline);
   }
 
   .piano-hint {
@@ -333,47 +341,11 @@
     text-align: center;
     margin-top: 6px;
   }
-
-  /* Layout: portrait vs landscape */
-  .landscape-only { display: none; }
-  .portrait-only { display: block; }
-
-  .landscape-grid {
-    display: none;
-  }
-
-  @media (orientation: landscape) {
-    .portrait-only { display: none; }
-    .landscape-only { display: block; }
-
-    .landscape-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .landscape-grid .slot {
-      margin-bottom: 0;
-      padding: 6px 7px;
-      font-size: 10px;
-    }
-
-    .landscape-grid .slot-header { margin-bottom: 4px; gap: 4px; }
-    .landscape-grid .slot-num { width: 16px; height: 16px; font-size: 9px; }
-    .landscape-grid .slot-summary { font-size: 9px; }
-    .landscape-grid .play-btn { width: 22px; height: 22px; }
-    .landscape-grid select { font-size: 9px; padding: 3px 2px; }
-    .landscape-grid .row { margin-top: 4px; gap: 3px; }
-    .landscape-grid .del-pattern-btn { font-size: 13px; }
-
-    .tempo-block { margin-bottom: 8px; }
-  }
 </style>
 </head>
 <body>
 
-<h1>VoiceUp</h1>
+<h1>VoiceUp <span style="font-size: 11px; color: var(--text-muted); font-weight: 400;">v1.0</span></h1>
 
 <div class="tempo-block">
   <div class="tempo-header">
@@ -390,13 +362,7 @@
   <span style="font-size:13px;">Select a slot and press play</span>
 </div>
 
-<!-- PORTRAIT: full stacked slots -->
-<div class="portrait-only" id="portrait-slots"></div>
-
-<!-- LANDSCAPE: compact 5-across slots -->
-<div class="landscape-only">
-  <div class="landscape-grid" id="landscape-slots"></div>
-</div>
+<div id="portrait-slots"></div>
 
 <div class="piano-wrap">
   <div class="piano" id="piano"></div>
@@ -455,8 +421,8 @@ for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
 
 // ---------- Patterns ----------
 const BUILTIN_PATTERNS = [
-  { id: "p1358531", name: "1 3 5 8 5 3 1", degrees: [1,3,5,8,5,3,1], builtin: true },
   { id: "p123454321", name: "1 2 3 4 5 4 3 2 1", degrees: [1,2,3,4,5,4,3,2,1], builtin: true },
+  { id: "p1358531", name: "1 3 5 8 5 3 1", degrees: [1,3,5,8,5,3,1], builtin: true },
   { id: "p8888531", name: "8 8 8 8 5 3 1", degrees: [8,8,8,8,5,3,1], builtin: true }
 ];
 
@@ -607,7 +573,10 @@ function stopPlayback() {
 function highlightKeyAt(midi, delayMs, durMs) {
   const t1 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
-    if (el) el.classList.add("active");
+    if (el) {
+      el.classList.add("active");
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
   }, Math.max(0, delayMs));
   const t2 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
@@ -649,13 +618,28 @@ async function playSlot(slotIndex) {
   if (activeSlotIndex !== null) return;
 
   const slot = state.slots[slotIndex];
-  if (!slot.patternId || !slot.low || !slot.high) return;
+  if (!slot.patternId || !slot.low || !slot.high) {
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': pattern or range not fully set</span>';
+    return;
+  }
   const pattern = getPattern(slot.patternId);
-  if (!pattern) return;
+  if (!pattern) {
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': pattern "' + slot.patternId + '" not found</span>';
+    return;
+  }
 
-  const lowMidi = nameToMidi(slot.low);
-  const highMidi = nameToMidi(slot.high);
-  if (lowMidi === null || highMidi === null || lowMidi > highMidi) return;
+  const noteAMidi = nameToMidi(slot.low);
+  const noteBMidi = nameToMidi(slot.high);
+  if (noteAMidi === null || noteBMidi === null) {
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': invalid range (' + slot.low + ' to ' + slot.high + ')</span>';
+    return;
+  }
+  // "low" set higher than "high" means a deliberate descending run - the app
+  // plays root-by-root from whichever side is actually higher down to whichever
+  // is actually lower, rather than treating this as an error.
+  const descending = noteAMidi > noteBMidi;
+  const lowMidi = Math.min(noteAMidi, noteBMidi);
+  const highMidi = Math.max(noteAMidi, noteBMidi);
 
   playbackToken++;
   const myToken = playbackToken;
@@ -670,11 +654,28 @@ async function playSlot(slotIndex) {
   const chordDur = 60 / tempo;      // quarter note (chord)
   const semis = degreesToSemitones(pattern.degrees);
 
+  // The stated range bounds EVERY note the pattern touches, not just where each
+  // step's root sits - so the last usable root is the one whose highest reached
+  // note (root + the pattern's own highest interval) still stays within highMidi.
+  const patternMaxInterval = Math.max(...semis, ...[0,4,7]);
+  const patternMinInterval = Math.min(...semis, 0);
+  const lastUsableRoot = highMidi - patternMaxInterval;
+  const firstUsableRoot = lowMidi - patternMinInterval;
+  const effectiveLowRoot = Math.max(lowMidi, firstUsableRoot);
+  const effectiveHighRoot = Math.min(highMidi, lastUsableRoot);
+
+  if (effectiveLowRoot > effectiveHighRoot) {
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': range too narrow for this pattern</span>';
+    activeSlotIndex = null;
+    renderAll();
+    return;
+  }
+
   // Pre-decode every distinct sample this run will need, so no audio scheduling
   // is ever delayed by an in-flight decode - this is what keeps the key
   // highlights and the actual sound in sync.
   const neededMidis = new Set();
-  for (let root = lowMidi; root <= highMidi; root++) {
+  for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) {
     [0,4,7].forEach(iv => neededMidis.add(root + iv)); // chord tones
     semis.forEach(iv => neededMidis.add(root + iv));   // arpeggio + repeated last note
   }
@@ -731,8 +732,14 @@ async function playSlot(slotIndex) {
     markPatternAt(allStepMidis, stepDelay, stepDurMs);
   }
 
-  for (let root = lowMidi; root <= highMidi; root++) {
-    scheduleStep(root);
+  if (descending) {
+    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) {
+      scheduleStep(root);
+    }
+  } else {
+    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) {
+      scheduleStep(root);
+    }
   }
 
   const totalMs = (t - ctx.currentTime) * 1000;
@@ -827,19 +834,12 @@ function stopIconSVG() {
 
 function renderAll() {
   const portrait = document.getElementById("portrait-slots");
-  const landscape = document.getElementById("landscape-slots");
 
   let pHtml = "";
   state.slots.forEach((slot, i) => {
     pHtml += renderSlotHTML(slot, i, false);
   });
   portrait.innerHTML = pHtml;
-
-  let lHtml = "";
-  state.slots.forEach((slot, i) => {
-    lHtml += renderSlotHTML(slot, i, true);
-  });
-  landscape.innerHTML = lHtml;
 
   document.getElementById("tempo").value = state.tempo;
   document.getElementById("tempo-val").textContent = state.tempo + " bpm";
