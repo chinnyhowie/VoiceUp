@@ -45,8 +45,10 @@
 <p style="color:#9a9d9f; font-size:13px;">Testing the 1-2-3-4-5-4-3-2-1 pattern, richer harmonic tone, on C3 then C#3</p>
 
 <button onclick="playRich()">Richer harmonic (previous)</button>
-<button onclick="playSaw()">Filtered sawtooth</button>
-<button onclick="playPluck()">Karplus-Strong pluck</button>
+<button onclick="playSaw()">Filtered sawtooth (previous)</button>
+<button onclick="playPluck()">Karplus-Strong pluck (previous)</button>
+<button onclick="playThick()">Layered octaves (new, thicker)</button>
+<button onclick="playTriangleLoud()">Loud triangle (new)</button>
 
 <div class="status" id="status"></div>
 
@@ -179,6 +181,56 @@ function playChordPluck(rootMidi, startTime, duration) {
   [0,4,7].forEach(iv => playTonePluck(midiToFreq(rootMidi + iv), startTime, duration));
 }
 
+// Layered octaves: fundamental + octave below (quieter) + octave above (light), triangle-based, loud and sustained
+function playToneThick(freq, startTime, duration) {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.5, startTime + 0.01);
+  gain.gain.setValueAtTime(0.5, startTime + duration - 0.03);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  gain.connect(ctx.destination);
+
+  const layers = [
+    { freqMult: 0.5, amp: 0.55, type: "triangle" },
+    { freqMult: 1,   amp: 1.0,  type: "triangle" },
+    { freqMult: 2,   amp: 0.25, type: "sine" }
+  ];
+
+  layers.forEach(l => {
+    const osc = ctx.createOscillator();
+    const layerGain = ctx.createGain();
+    osc.type = l.type;
+    osc.frequency.setValueAtTime(freq * l.freqMult, startTime);
+    layerGain.gain.value = l.amp;
+    osc.connect(layerGain);
+    layerGain.connect(gain);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  });
+}
+function playChordThick(rootMidi, startTime, duration) {
+  [0,4,7].forEach(iv => playToneThick(midiToFreq(rootMidi + iv), startTime, duration));
+}
+
+// Loud triangle: simple, single oscillator, pushed loud with full sustain, no fast fade
+function playToneTriLoud(freq, startTime, duration) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.6, startTime + 0.008);
+  gain.gain.setValueAtTime(0.6, startTime + duration - 0.02);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+function playChordTriLoud(rootMidi, startTime, duration) {
+  [0,4,7].forEach(iv => playToneTriLoud(midiToFreq(rootMidi + iv), startTime, duration));
+}
+
 function updateStatus(text) {
   document.getElementById("status").textContent = text;
 }
@@ -189,46 +241,43 @@ function noteName(midi) {
 
 function runSequence(tone) {
   const tempo = 90;
-  const noteDur = 60 / tempo;      // eighth-note length used as the base unit here
-  const chordDur = noteDur * 1.2;
-  const pauseDur = noteDur * 2;    // pause = two arpeggio-note-lengths (a quarter note if notes are eighths)
+  const noteDur = 60 / tempo / 2; // eighth note duration (60/tempo = quarter note)
 
   let playTone, playChord;
   if (tone === "rich") { playTone = playToneRich; playChord = playChordRich; }
   else if (tone === "saw") { playTone = playToneSaw; playChord = playChordSaw; }
-  else { playTone = playTonePluck; playChord = playChordPluck; }
+  else if (tone === "pluck") { playTone = playTonePluck; playChord = playChordPluck; }
+  else if (tone === "thick") { playTone = playToneThick; playChord = playChordThick; }
+  else { playTone = playToneTriLoud; playChord = playChordTriLoud; }
+
+  const chordDur = noteDur * 2; // chord = quarter note (arpeggio notes are eighth notes = noteDur)
 
   let t = ctx.currentTime + 0.1;
   let timeouts = [];
 
-  function scheduleStep(rootMidi, withChord) {
-    if (withChord) {
-      // 1. opening/next chord
-      playChord(rootMidi, t, chordDur);
-      timeouts.push(setTimeout(() => updateStatus(noteName(rootMidi) + " chord"), (t - ctx.currentTime) * 1000));
-      t += chordDur;
-      // 2. pause
-      t += pauseDur;
-    }
+  function scheduleStep(rootMidi) {
+    // chord: quarter note duration, rings fully, no added silence
+    playChord(rootMidi, t, chordDur);
+    timeouts.push(setTimeout(() => updateStatus(noteName(rootMidi) + " chord"), (t - ctx.currentTime) * 1000));
+    t += chordDur;
 
-    // 3. arpeggio
+    // arpeggio: eighth notes, starts immediately after chord
     semis_123454321.forEach((iv) => {
       const noteMidi = rootMidi + iv;
-      playTone(midiToFreq(noteMidi), t, noteDur * 0.9);
+      playTone(midiToFreq(noteMidi), t, noteDur * 0.95);
       timeouts.push(setTimeout(() => updateStatus(noteName(noteMidi)), (t - ctx.currentTime) * 1000));
       t += noteDur;
     });
 
-    // 4. repeat last arpeggio note once
+    // repeat last arpeggio note once (eighth note)
     const lastMidi = rootMidi + semis_123454321[semis_123454321.length - 1];
-    playTone(midiToFreq(lastMidi), t, noteDur * 0.9);
+    playTone(midiToFreq(lastMidi), t, noteDur * 0.95);
     t += noteDur;
   }
 
-  // Step on C3 (with its opening chord)
-  scheduleStep(C3, true);
-  // Immediately (no pause) the next semitone's chord, then pause, then its arpeggio
-  scheduleStep(C3 + 1, true);
+  // C3, then immediately next semitone C#3 (no pause between steps either)
+  scheduleStep(C3);
+  scheduleStep(C3 + 1);
 
   return timeouts;
 }
@@ -236,6 +285,8 @@ function runSequence(tone) {
 function playRich() { runSequence("rich"); }
 function playSaw() { runSequence("saw"); }
 function playPluck() { runSequence("pluck"); }
+function playThick() { runSequence("thick"); }
+function playTriangleLoud() { runSequence("triloud"); }
 </script>
 </body>
 </html>
