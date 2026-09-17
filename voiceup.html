@@ -152,13 +152,15 @@
 
   .tap-btn {
     background: var(--accent-strong);
-    color: var(--accent-text);
+    color: var(--accent-text) !important;
     border: none;
     border-radius: 6px;
     padding: 8px 14px;
     font-size: 12px;
     font-weight: 500;
     white-space: nowrap;
+    min-width: 44px;
+    flex-shrink: 0;
   }
 
   .slot-body {
@@ -518,15 +520,19 @@ function getBufferForNote(sampleName) {
 }
 
 // schedule a note to play at startTime for playDur seconds (may be shorter than the
-// sample's own length, in which case it fades out early rather than clicking)
-async function scheduleNotePlayback(midi, startTime, playDur) {
+// sample's own length, in which case it fades out early rather than clicking).
+// Returns the created source node (or null) so callers can track and stop it.
+async function scheduleNotePlayback(midi, startTime, playDur, trackToken) {
   const sampleName = midiToSampleName(midi);
   let buf;
   try {
     buf = await getBufferForNote(sampleName);
   } catch (e) {
-    return;
+    return null;
   }
+  // if playback was stopped/cancelled while we were awaiting the buffer, bail out
+  if (trackToken !== undefined && trackToken !== playbackToken) return null;
+
   const ctx = getCtx();
   const src = ctx.createBufferSource();
   src.buffer = buf;
@@ -543,11 +549,13 @@ async function scheduleNotePlayback(midi, startTime, playDur) {
   gain.connect(ctx.destination);
   src.start(startTime);
   src.stop(Math.min(naturalEnd, intendedEnd) + 0.05);
+  activeAudioSources.push(src);
+  return src;
 }
 
-async function scheduleChordPlayback(rootMidi, startTime, playDur) {
+async function scheduleChordPlayback(rootMidi, startTime, playDur, trackToken) {
   // root, major third, fifth
-  await Promise.all([0,4,7].map(iv => scheduleNotePlayback(rootMidi + iv, startTime, playDur)));
+  await Promise.all([0,4,7].map(iv => scheduleNotePlayback(rootMidi + iv, startTime, playDur, trackToken)));
 }
 
 // preload all buffers used across the full 88-key range once, in the background
@@ -564,6 +572,7 @@ async function preloadAllSamples() {
 let playbackToken = 0; // increment to cancel any running playback
 let highlightTimeouts = [];
 let activeSlotIndex = null; // which slot is currently playing, or null
+let activeAudioSources = []; // AudioBufferSourceNodes currently scheduled/playing, so we can force-stop them
 
 function clearHighlights() {
   highlightTimeouts.forEach(t => clearTimeout(t));
@@ -574,6 +583,11 @@ function clearHighlights() {
 function stopPlayback() {
   playbackToken++;
   clearHighlights();
+  // actually silence any audio nodes already scheduled/playing
+  activeAudioSources.forEach(src => {
+    try { src.stop(0); } catch (e) { /* already stopped or ended, ignore */ }
+  });
+  activeAudioSources = [];
   document.getElementById("now-playing").innerHTML = '<span style="font-size:13px;">Select a slot and press play</span>';
   activeSlotIndex = null;
   renderAll();
@@ -583,11 +597,11 @@ function highlightKeyAt(midi, delayMs, durMs) {
   const t1 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
     if (el) el.classList.add("active");
-  }, delayMs);
+  }, Math.max(0, delayMs));
   const t2 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
     if (el) el.classList.remove("active");
-  }, delayMs + durMs);
+  }, Math.max(0, delayMs) + durMs);
   highlightTimeouts.push(t1, t2);
 }
 
@@ -596,7 +610,7 @@ function updateNowPlaying(noteName) {
     '<span class="note">' + noteName + '</span><span>playing&hellip;</span>';
 }
 
-function playSlot(slotIndex) {
+async function playSlot(slotIndex) {
   // if this slot is already playing, treat as stop
   if (activeSlotIndex === slotIndex) {
     stopPlayback();
@@ -617,6 +631,7 @@ function playSlot(slotIndex) {
   playbackToken++;
   const myToken = playbackToken;
   clearHighlights();
+  activeAudioSources = [];
   activeSlotIndex = slotIndex;
   renderAll();
 
@@ -626,39 +641,55 @@ function playSlot(slotIndex) {
   const chordDur = 60 / tempo;      // quarter note (chord)
   const semis = degreesToSemitones(pattern.degrees);
 
+  // Pre-decode every distinct sample this run will need, so no audio scheduling
+  // is ever delayed by an in-flight decode - this is what keeps the key
+  // highlights and the actual sound in sync.
+  const neededMidis = new Set();
+  for (let root = lowMidi; root <= highMidi; root++) {
+    [0,4,7].forEach(iv => neededMidis.add(root + iv)); // chord tones
+    semis.forEach(iv => neededMidis.add(root + iv));   // arpeggio + repeated last note
+  }
+  try {
+    await Promise.all(Array.from(neededMidis).map(m => getBufferForNote(midiToSampleName(m)).catch(() => null)));
+  } catch (e) { /* individual failures already swallowed above */ }
+
+  // bail out if stopped while we were loading
+  if (myToken !== playbackToken) return;
+
   let t = ctx.currentTime + 0.15;
 
   function scheduleStep(rootMidi) {
     // chord: quarter note, rings fully, no added silence before or after
-    scheduleChordPlayback(rootMidi, t, chordDur);
+    const chordTones = [0,4,7].map(iv => rootMidi + iv);
+    chordTones.forEach(m => scheduleNotePlayback(m, t, chordDur, myToken));
     const chordName = midiToSampleName(rootMidi);
     const chordDelay = (t - ctx.currentTime) * 1000;
     highlightTimeouts.push(setTimeout(() => {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
     }, Math.max(0, chordDelay)));
-    highlightKeyAt(rootMidi, Math.max(0, chordDelay), chordDur * 1000);
+    chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
     t += chordDur;
 
     // arpeggio: eighth notes, immediately after chord
     semis.forEach(iv => {
       const noteMidi = rootMidi + iv;
-      scheduleNotePlayback(noteMidi, t, noteDur);
+      scheduleNotePlayback(noteMidi, t, noteDur, myToken);
       const noteName = midiToSampleName(noteMidi);
       const noteDelay = (t - ctx.currentTime) * 1000;
       highlightTimeouts.push(setTimeout(() => {
         if (myToken !== playbackToken) return;
         updateNowPlaying(noteName);
       }, Math.max(0, noteDelay)));
-      highlightKeyAt(noteMidi, Math.max(0, noteDelay), noteDur * 1000);
+      highlightKeyAt(noteMidi, noteDelay, noteDur * 1000);
       t += noteDur;
     });
 
     // repeat last arpeggio note once (eighth note), then straight into next chord
     const lastMidi = rootMidi + semis[semis.length - 1];
-    scheduleNotePlayback(lastMidi, t, noteDur);
+    scheduleNotePlayback(lastMidi, t, noteDur, myToken);
     const lastDelay = (t - ctx.currentTime) * 1000;
-    highlightKeyAt(lastMidi, Math.max(0, lastDelay), noteDur * 1000);
+    highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
     t += noteDur;
   }
 
