@@ -25,7 +25,7 @@
     --key-in-pattern: #d9776b;
     --key-active-outline: #ffffff;
     --key-in-pattern-outline: #7a2e24;
-    --app-font-size: 15px;
+    --app-font-size: 18px;
   }
   html[data-theme="dark"] {
     --bg: #14171a;
@@ -201,11 +201,13 @@
     border-color: var(--accent-strong);
   }
 
-  /* Note picker overlay - anchored left or right depending on which field opened it */
+  /* Note picker overlay - anchored left or right depending on which field opened it.
+     Deliberately NOT using the full-screen backdrop, since the piano underneath
+     must stay fully tappable while this is open. */
   .note-picker-overlay {
     position: fixed;
-    top: 25%;
-    height: 50vh;
+    top: 37.5%;
+    height: 25vh;
     width: min(160px, 40vw);
     background: var(--card);
     border: 0.5px solid var(--accent-strong);
@@ -445,7 +447,7 @@
   }
 
   .piano-wrap {
-    overflow-x: auto;
+    overflow-x: hidden;
     background: var(--card);
     border: 0.5px solid var(--card-border);
     border-radius: 10px;
@@ -455,13 +457,13 @@
 
   .piano {
     position: relative;
-    height: 90px;
-    width: max-content;
+    height: var(--piano-height, 90px);
+    width: 100%;
   }
 
   .white-key {
-    width: 22px;
-    height: 90px;
+    width: var(--white-key-width, 22px);
+    height: var(--piano-height, 90px);
     background: var(--key-white);
     border: 0.5px solid var(--key-white-border);
     display: inline-block;
@@ -492,8 +494,8 @@
   }
 
   .black-key {
-    width: 14px;
-    height: 54px;
+    width: calc(var(--white-key-width, 22px) * 0.64);
+    height: calc(var(--piano-height, 90px) * 0.6);
     background: var(--key-black);
     position: absolute;
     top: 0;
@@ -534,16 +536,16 @@
   </div>
 </div>
 
-<div class="now-playing" id="now-playing">
-  <span style="font-size:13px;">Select a slot and press play</span>
-</div>
+<div class="now-playing" id="now-playing"></div>
 
 <div id="portrait-slots"></div>
+
+<div style="height: 64px;"></div>
 
 <div class="piano-wrap">
   <div class="piano" id="piano"></div>
 </div>
-<div class="piano-hint">Tap a key, or the Start/End fields, to set a slot's range. Tap any key to hear it.</div>
+
 
 <div class="overlay-backdrop" id="overlay-backdrop" onclick="closeAllOverlays()"></div>
 
@@ -565,9 +567,9 @@
   <div class="settings-section">
     <div class="settings-row-between">
       <span>Font size</span>
-      <span id="font-size-val">15px</span>
+      <span id="font-size-val">18px</span>
     </div>
-    <input type="range" id="font-size-slider" min="12" max="20" step="1" value="15">
+    <input type="range" id="font-size-slider" min="12" max="20" step="1" value="18">
   </div>
 
   <div class="settings-section">
@@ -677,7 +679,7 @@ let state = loadState() || {
   tempo: 90,
   expandedSlot: 0,
   theme: "auto",
-  fontSize: 15,
+  fontSize: 18,
   pianoOctaves: 1.5
 };
 
@@ -689,7 +691,7 @@ if (state.slots) {
   });
 }
 if (state.theme === undefined) state.theme = "auto";
-if (state.fontSize === undefined) state.fontSize = 15;
+if (state.fontSize === undefined) state.fontSize = 18;
 if (state.pianoOctaves === undefined) state.pianoOctaves = 1.5;
 
 function allPatterns() {
@@ -795,7 +797,7 @@ function stopPlayback() {
     try { src.stop(0); } catch (e) { /* already stopped or ended, ignore */ }
   });
   activeAudioSources = [];
-  document.getElementById("now-playing").innerHTML = '<span style="font-size:13px;">Select a slot and press play</span>';
+  document.getElementById("now-playing").innerHTML = "";
   activeSlotIndex = null;
   renderAll();
 }
@@ -850,8 +852,8 @@ function markPatternAt(midis, delayMs, durMs) {
 }
 
 function updateNowPlaying(noteName) {
-  document.getElementById("now-playing").innerHTML =
-    '<span class="note">' + noteName + '</span><span>playing&hellip;</span>';
+  // Intentionally a no-op: the piano's own highlighting already shows what's
+  // playing clearly, so the note-name text display has been removed.
 }
 
 async function playSlot(slotIndex) {
@@ -1149,6 +1151,8 @@ function deletePattern(id) {
 }
 
 // ---------- Note picker overlay ----------
+let notePickerOutsideClickHandler = null;
+
 function openNotePicker(slotIndex, which, align, evt) {
   if (evt) evt.stopPropagation();
   rangeTarget = { slotIndex: slotIndex, which: which };
@@ -1164,7 +1168,6 @@ function openNotePicker(slotIndex, which, align, evt) {
   overlay.classList.remove("align-left", "align-right");
   overlay.classList.add(align === "left" ? "align-left" : "align-right");
   overlay.classList.add("show");
-  document.getElementById("overlay-backdrop").classList.add("show");
 
   // scroll the picker so the current selection is roughly in view
   if (currentName) {
@@ -1173,6 +1176,23 @@ function openNotePicker(slotIndex, which, align, evt) {
       if (sel) sel.scrollIntoView({ block: "center" });
     }, 0);
   }
+
+  // Deliberately no full-screen backdrop here - the piano must stay tappable
+  // while this is open. Instead, listen for a tap anywhere outside the picker
+  // itself (and outside the range field that opened it) to dismiss it, without
+  // blocking taps on the piano or anything else on the page.
+  if (notePickerOutsideClickHandler) {
+    document.removeEventListener("click", notePickerOutsideClickHandler, true);
+  }
+  notePickerOutsideClickHandler = function(e) {
+    if (overlay.contains(e.target)) return; // click inside the list itself
+    if (e.target.closest && e.target.closest(".range-field")) return; // the field that opens/reopens it
+    if (e.target.closest && e.target.closest(".key")) return; // a piano key - onKeyTap handles closing itself
+    closeAllOverlays();
+  };
+  setTimeout(() => {
+    document.addEventListener("click", notePickerOutsideClickHandler, true);
+  }, 0);
 }
 
 function pickNoteForRange(midi) {
@@ -1196,6 +1216,10 @@ function closeAllOverlays() {
   document.getElementById("settings-overlay").classList.remove("show");
   document.getElementById("note-picker-overlay").classList.remove("show");
   document.getElementById("overlay-backdrop").classList.remove("show");
+  if (notePickerOutsideClickHandler) {
+    document.removeEventListener("click", notePickerOutsideClickHandler, true);
+    notePickerOutsideClickHandler = null;
+  }
   rangeTarget = null;
 }
 
@@ -1242,13 +1266,36 @@ document.getElementById("tempo").addEventListener("input", function() {
 // how many white keys make up the visible window, based on the chosen octave count,
 // plus one extra white key of padding on each side (per-key math kept simple by
 // working in semitones then converting to an approximate white-key width)
+// how many semitones the auto-scroll centring window should span during playback,
+// based on the chosen octave preset, plus one padding key each side
 function getPianoWindowSemitones() {
-  return Math.round(state.pianoOctaves * 12) + 2; // +2 for one padding key each side (approx)
+  return Math.round(state.pianoOctaves * 12) + 2;
+}
+
+// total count of white keys across the full 88-key range - used to size each key
+// so the whole piano exactly fills the available width with no horizontal scrolling
+function countWhiteKeys() {
+  let count = 0;
+  for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
+    if (isWhite(m)) count++;
+  }
+  return count;
 }
 
 function renderPiano() {
   const piano = document.getElementById("piano");
-  const whiteKeyWidth = 22;
+  const wrap = document.querySelector(".piano-wrap");
+
+  // compute white key width from the actual available width, so the piano always
+  // fills the screen edge to edge with no need to scroll horizontally, and every
+  // key (white and black) scales proportionally from that one width value
+  const totalWhiteKeys = countWhiteKeys();
+  const availableWidth = wrap ? wrap.clientWidth - 16 : 320; // minus the wrap's own padding
+  const whiteKeyWidth = Math.max(6, availableWidth / totalWhiteKeys);
+  const pianoHeight = whiteKeyWidth * (90 / 22); // keep the original width:height ratio
+
+  document.documentElement.style.setProperty("--white-key-width", whiteKeyWidth + "px");
+  document.documentElement.style.setProperty("--piano-height", pianoHeight + "px");
 
   // first pass: white keys
   let whiteHtml = "";
@@ -1273,17 +1320,9 @@ function renderPiano() {
   }
 
   piano.innerHTML = whiteHtml + blackHtml;
-
-  // size the visible viewport (piano-wrap) to roughly the chosen number of white keys,
-  // so the window shows approximately the requested octave span without needing to scroll
-  // to see it, height scales proportionally to the width setting
-  const approxWhiteKeysVisible = Math.round(getPianoWindowSemitones() * 7 / 12);
-  const wrap = document.querySelector(".piano-wrap");
-  if (wrap) {
-    wrap.style.maxWidth = (approxWhiteKeysVisible * whiteKeyWidth) + "px";
-    wrap.style.margin = "0 auto";
-  }
 }
+
+window.addEventListener("resize", () => renderPiano());
 
 function onKeyTap(midi) {
   const name = midiToName(midi);
