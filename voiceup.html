@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VoiceUp</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --card-border: #ddddd9;
+    --text: #1a1a18;
+    --text-secondary: #4a4a46;
+    --text-muted: #6b6b66;
+    --accent-bg: #d3f0dc;
+    --accent-text: #1f6b3f;
+    --accent: #1f6b3f;
+    --accent-strong: #2d6a4f;
+    --input-bg: #ffffff;
+    --danger: #b3271e;
+    --key-white: #ffffff;
+    --key-white-border: #ccccc7;
+    --key-black: #2a2a28;
+    --key-active: #1f6b3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a;
+      --card: #1f2327;
+      --card-border: #33383d;
+      --text: #f2f2f0;
+      --text-secondary: #c8cacc;
+      --text-muted: #9a9d9f;
+      --accent-bg: #2d6a4f;
+      --accent-text: #b7e4c7;
+      --accent: #6fcf97;
+      --accent-strong: #2d6a4f;
+      --input-bg: #14171a;
+      --danger: #e0776d;
+      --key-white: #2a2e32;
+      --key-white-border: #444a50;
+      --key-black: #0d0f11;
+      --key-active: #6fcf97;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 4px 0 14px;
+    letter-spacing: 0.2px;
+  }
+
+  select, button {
+    font-family: inherit;
+    font-size: 12px;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 0.5px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 6px;
+  }
+
+  select {
+    width: 100%;
+  }
+
+  .slot {
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .slot.active {
+    border-color: var(--accent-strong);
+  }
+
+  .slot-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .slot-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .slot.active .slot-num {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .slot-summary {
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .slot.active .slot-summary {
+    color: var(--text);
+  }
+
+  .play-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .play-btn svg { display: block; }
+
+  .slot-body {
+    display: none;
+  }
+
+  .slot.expanded .slot-body {
+    display: block;
+  }
+
+  .row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+  }
+
+  .row select { flex: 1; }
+
+  .pattern-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .pattern-row select { flex: 1; }
+
+  .del-pattern-btn {
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    font-size: 16px;
+    padding: 2px 4px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .custom-pattern-add {
+    margin-top: 8px;
+    display: none;
+    gap: 6px;
+  }
+
+  .custom-pattern-add.show { display: flex; }
+
+  .custom-pattern-add input {
+    flex: 1;
+    font-size: 12px;
+    padding: 6px 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 0.5px solid var(--card-border);
+    border-radius: 6px;
+  }
+
+  .custom-pattern-add button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .range-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .tempo-block {
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+
+  .tempo-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+  }
+
+  .now-playing {
+    text-align: center;
+    margin: 6px 0 14px;
+    min-height: 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .now-playing .note {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .piano-wrap {
+    overflow-x: auto;
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .piano {
+    position: relative;
+    height: 90px;
+    width: max-content;
+  }
+
+  .white-key {
+    width: 22px;
+    height: 90px;
+    background: var(--key-white);
+    border: 0.5px solid var(--key-white-border);
+    display: inline-block;
+    box-sizing: border-box;
+    vertical-align: top;
+    position: relative;
+  }
+
+  .white-key.active {
+    background: var(--key-active) !important;
+  }
+
+  .white-key .label {
+    position: absolute;
+    bottom: 3px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .black-key {
+    width: 14px;
+    height: 54px;
+    background: var(--key-black);
+    position: absolute;
+    top: 0;
+    border-radius: 0 0 3px 3px;
+    z-index: 2;
+  }
+
+  .black-key.active {
+    background: var(--key-active) !important;
+  }
+
+  .piano-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* Layout: portrait vs landscape */
+  .landscape-only { display: none; }
+  .portrait-only { display: block; }
+
+  .landscape-grid {
+    display: none;
+  }
+
+  @media (orientation: landscape) {
+    .portrait-only { display: none; }
+    .landscape-only { display: block; }
+
+    .landscape-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .landscape-grid .slot {
+      margin-bottom: 0;
+      padding: 6px 7px;
+      font-size: 10px;
+    }
+
+    .landscape-grid .slot-header { margin-bottom: 4px; gap: 4px; }
+    .landscape-grid .slot-num { width: 16px; height: 16px; font-size: 9px; }
+    .landscape-grid .slot-summary { font-size: 9px; }
+    .landscape-grid .play-btn { width: 22px; height: 22px; }
+    .landscape-grid select { font-size: 9px; padding: 3px 2px; }
+    .landscape-grid .row { margin-top: 4px; gap: 3px; }
+    .landscape-grid .del-pattern-btn { font-size: 13px; }
+
+    .tempo-block { margin-bottom: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>VoiceUp</h1>
+
+<div class="tempo-block">
+  <div class="tempo-header">
+    <span>Tempo</span>
+    <span id="tempo-val">90 bpm</span>
+  </div>
+  <input type="range" id="tempo" min="40" max="160" value="90" step="1">
+</div>
+
+<div class="now-playing" id="now-playing">
+  <span style="font-size:13px;">Select a slot and press play</span>
+</div>
+
+<!-- PORTRAIT: full stacked slots -->
+<div class="portrait-only" id="portrait-slots"></div>
+
+<!-- LANDSCAPE: compact 5-across slots -->
+<div class="landscape-only">
+  <div class="landscape-grid" id="landscape-slots"></div>
+</div>
+
+<div class="piano-wrap">
+  <div class="piano" id="piano"></div>
+</div>
+<div class="piano-hint">Tap a key, or use the dropdowns in a slot, to set its range</div>
+
+<script>
+// ---------- Note utilities ----------
+const NOTE_NAMES = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const WHITE_PC = [0,2,4,5,7,9,11];
+const BLACK_PC = [1,3,6,8,10];
+
+// MIDI-like numbering: A0 = 21 ... C8 = 108. We'll use 88-key range 21-108.
+const LOWEST_MIDI = 21; // A0
+const HIGHEST_MIDI = 108; // C8
+
+function midiToName(m) {
+  const pc = m % 12;
+  const octave = Math.floor(m / 12) - 1;
+  return NOTE_NAMES[pc] + octave;
+}
+
+function midiToFreq(m) {
+  return 440 * Math.pow(2, (m - 69) / 12);
+}
+
+function nameToMidi(name) {
+  // finds first midi matching a name like "G2"
+  for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
+    if (midiToName(m) === name) return m;
+  }
+  return null;
+}
+
+function isWhite(m) {
+  return WHITE_PC.includes(m % 12);
+}
+
+// build list of all note names for dropdowns
+const ALL_NOTES = [];
+for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
+  ALL_NOTES.push({ midi: m, name: midiToName(m) });
+}
+
+// ---------- Patterns ----------
+const BUILTIN_PATTERNS = [
+  { id: "p1358531", name: "1 3 5 8 5 3 1", degrees: [1,3,5,8,5,3,1], builtin: true },
+  { id: "p123454321", name: "1 2 3 4 5 4 3 2 1", degrees: [1,2,3,4,5,4,3,2,1], builtin: true },
+  { id: "p8888531", name: "8 8 8 8 5 3 1", degrees: [8,8,8,8,5,3,1], builtin: true }
+];
+
+const DEGREE_SEMITONES = { 1:0, 2:2, 3:4, 4:5, 5:7, 6:9, 7:11, 8:12 };
+
+function degreesToSemitones(degrees) {
+  return degrees.map(d => DEGREE_SEMITONES[d] !== undefined ? DEGREE_SEMITONES[d] : 0);
+}
+
+// ---------- Storage ----------
+const STORAGE_KEY = "voiceup_state_v1";
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {}
+}
+
+let state = loadState() || {
+  customPatterns: [],
+  slots: [
+    { patternId: "p1358531", low: "G2", high: "E5" },
+    { patternId: "p123454321", low: "D3", high: "A4" },
+    { patternId: "p8888531", low: "E3", high: "B4" },
+    { patternId: null, low: null, high: null },
+    { patternId: null, low: null, high: null }
+  ],
+  tempo: 90,
+  expandedSlot: 0
+};
+
+function allPatterns() {
+  return BUILTIN_PATTERNS.concat(state.customPatterns);
+}
+
+function getPattern(id) {
+  return allPatterns().find(p => p.id === id) || null;
+}
+
+// ---------- Audio ----------
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, startTime, duration) {
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.28, startTime + 0.02);
+  gain.gain.setValueAtTime(0.28, startTime + duration - 0.04);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+function playChord(rootMidi, startTime, duration) {
+  // root, major third, fifth
+  [0,4,7].forEach(iv => {
+    playTone(midiToFreq(rootMidi + iv), startTime, duration);
+  });
+}
+
+// ---------- Playback engine ----------
+let playbackToken = 0; // increment to cancel any running playback
+let highlightTimeouts = [];
+
+function clearHighlights() {
+  highlightTimeouts.forEach(t => clearTimeout(t));
+  highlightTimeouts = [];
+  document.querySelectorAll(".white-key.active, .black-key.active").forEach(el => el.classList.remove("active"));
+}
+
+function stopPlayback() {
+  playbackToken++;
+  clearHighlights();
+  document.getElementById("now-playing").innerHTML = '<span style="font-size:13px;">Select a slot and press play</span>';
+}
+
+function highlightKeyAt(midi, delayMs, durMs) {
+  const t1 = setTimeout(() => {
+    const el = document.querySelector('.key[data-midi="' + midi + '"]');
+    if (el) el.classList.add("active");
+  }, delayMs);
+  const t2 = setTimeout(() => {
+    const el = document.querySelector('.key[data-midi="' + midi + '"]');
+    if (el) el.classList.remove("active");
+  }, delayMs + durMs);
+  highlightTimeouts.push(t1, t2);
+}
+
+function updateNowPlaying(noteName) {
+  document.getElementById("now-playing").innerHTML =
+    '<span class="note">' + noteName + '</span><span>playing&hellip;</span>';
+}
+
+function playSlot(slotIndex) {
+  const slot = state.slots[slotIndex];
+  if (!slot.patternId || !slot.low || !slot.high) return;
+  const pattern = getPattern(slot.patternId);
+  if (!pattern) return;
+
+  const lowMidi = nameToMidi(slot.low);
+  const highMidi = nameToMidi(slot.high);
+  if (lowMidi === null || highMidi === null || lowMidi > highMidi) return;
+
+  playbackToken++;
+  const myToken = playbackToken;
+  clearHighlights();
+
+  const ctx = getCtx();
+  const tempo = state.tempo;
+  const noteDur = 60 / tempo; // seconds per note
+  const chordDur = noteDur * 1.2;
+  const semis = degreesToSemitones(pattern.degrees);
+
+  let t = ctx.currentTime + 0.1;
+  let uiDelayBase = performance.now();
+
+  function scheduleStep(rootMidi) {
+    // chord
+    playChord(rootMidi, t, chordDur);
+    const chordName = midiToName(rootMidi);
+    const chordDelay = (t - ctx.currentTime) * 1000;
+    highlightTimeouts.push(setTimeout(() => {
+      if (myToken !== playbackToken) return;
+      updateNowPlaying(chordName + " chord");
+    }, Math.max(0, chordDelay)));
+    highlightKeyAt(rootMidi, Math.max(0, chordDelay), chordDur * 1000);
+    t += chordDur + 0.05;
+
+    // arpeggio
+    semis.forEach(iv => {
+      const noteMidi = rootMidi + iv;
+      playTone(midiToFreq(noteMidi), t, noteDur * 0.9);
+      const noteName = midiToName(noteMidi);
+      const noteDelay = (t - ctx.currentTime) * 1000;
+      highlightTimeouts.push(setTimeout(() => {
+        if (myToken !== playbackToken) return;
+        updateNowPlaying(noteName);
+      }, Math.max(0, noteDelay)));
+      highlightKeyAt(noteMidi, Math.max(0, noteDelay), noteDur * 900);
+      t += noteDur;
+    });
+    t += 0.1;
+  }
+
+  for (let root = lowMidi; root <= highMidi; root++) {
+    scheduleStep(root);
+  }
+
+  const totalMs = (t - ctx.currentTime) * 1000;
+  highlightTimeouts.push(setTimeout(() => {
+    if (myToken !== playbackToken) return;
+    stopPlayback();
+  }, totalMs + 100));
+}
+
+// ---------- Rendering ----------
+let rangeTarget = null; // { slotIndex, which: 'low'|'high' } - set when a range dropdown is focused, so piano taps know where to apply
+
+function slotSummaryText(slot) {
+  if (!slot.patternId || !slot.low || !slot.high) return "Not set";
+  const p = getPattern(slot.patternId);
+  const pname = p ? p.name : "?";
+  return pname + " \u00b7 " + slot.low + " to " + slot.high;
+}
+
+function buildPatternOptions(selectedId) {
+  let html = "";
+  allPatterns().forEach(p => {
+    html += '<option value="' + p.id + '"' + (p.id === selectedId ? " selected" : "") + '>' + p.name + '</option>';
+  });
+  html += '<option value="__add__">+ Add new pattern</option>';
+  return html;
+}
+
+function buildNoteOptions(selectedName) {
+  let html = "";
+  ALL_NOTES.forEach(n => {
+    html += '<option value="' + n.name + '"' + (n.name === selectedName ? " selected" : "") + '>' + n.name + '</option>';
+  });
+  return html;
+}
+
+function renderSlotHTML(slot, i, compact) {
+  const isExpanded = !compact && state.expandedSlot === i;
+  const pattern = slot.patternId ? getPattern(slot.patternId) : null;
+  const isCustom = pattern && !pattern.builtin;
+
+  let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + '" data-slot="' + i + '">';
+  html += '<div class="slot-header" onclick="toggleSlot(' + i + ')">';
+  html += '<div class="slot-num">' + (i+1) + '</div>';
+  html += '<div class="slot-summary">' + slotSummaryText(slot) + '</div>';
+  html += '<button class="play-btn" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="Play slot ' + (i+1) + '">' + playIconSVG() + '</button>';
+  html += '</div>';
+
+  if (!compact) {
+    html += '<div class="slot-body">';
+    html += renderSlotBody(slot, i);
+    html += '</div>';
+  } else {
+    html += renderSlotBody(slot, i, true);
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function renderSlotBody(slot, i, compact) {
+  let html = '<div class="pattern-row">';
+  html += '<select onchange="onPatternChange(' + i + ', this.value)">' + buildPatternOptions(slot.patternId) + '</select>';
+  const pattern = slot.patternId ? getPattern(slot.patternId) : null;
+  if (pattern && !pattern.builtin) {
+    html += '<button class="del-pattern-btn" onclick="deletePattern(\'' + pattern.id + '\')" aria-label="Delete pattern">&times;</button>';
+  }
+  html += '</div>';
+
+  html += '<div class="custom-pattern-add" id="custom-add-' + i + '">';
+  html += '<input type="text" id="custom-input-' + i + '" placeholder="e.g. 1 5 3 1">';
+  html += '<button onclick="addCustomPattern(' + i + ')">Add</button>';
+  html += '</div>';
+
+  html += '<div class="row">';
+  html += '<select onchange="onRangeChange(' + i + ', \'low\', this.value)" onfocus="setRangeTarget(' + i + ', \'low\')">' + buildNoteOptions(slot.low) + '</select>';
+  html += '<select onchange="onRangeChange(' + i + ', \'high\', this.value)" onfocus="setRangeTarget(' + i + ', \'high\')">' + buildNoteOptions(slot.high) + '</select>';
+  html += '</div>';
+
+  return html;
+}
+
+function playIconSVG() {
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="var(--accent)"><path d="M8 5v14l11-7z"/></svg>';
+}
+
+function renderAll() {
+  const portrait = document.getElementById("portrait-slots");
+  const landscape = document.getElementById("landscape-slots");
+
+  let pHtml = "";
+  state.slots.forEach((slot, i) => {
+    pHtml += renderSlotHTML(slot, i, false);
+  });
+  portrait.innerHTML = pHtml;
+
+  let lHtml = "";
+  state.slots.forEach((slot, i) => {
+    lHtml += renderSlotHTML(slot, i, true);
+  });
+  landscape.innerHTML = lHtml;
+
+  document.getElementById("tempo").value = state.tempo;
+  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
+
+  renderPiano();
+}
+
+function toggleSlot(i) {
+  state.expandedSlot = state.expandedSlot === i ? -1 : i;
+  renderAll();
+}
+
+function onPatternChange(i, value) {
+  if (value === "__add__") {
+    const el = document.getElementById("custom-add-" + i);
+    if (el) el.classList.add("show");
+    // revert select visually by re-render without changing patternId
+    renderAll();
+    document.getElementById("custom-add-" + i).classList.add("show");
+    return;
+  }
+  state.slots[i].patternId = value;
+  saveState();
+  renderAll();
+}
+
+function addCustomPattern(i) {
+  const input = document.getElementById("custom-input-" + i);
+  const raw = input.value.trim();
+  if (!raw) return;
+  const degrees = raw.split(/[\s,]+/).map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n >= 1 && n <= 8);
+  if (degrees.length === 0) {
+    input.style.borderColor = "var(--danger)";
+    return;
+  }
+  const id = "custom_" + Date.now();
+  const name = degrees.join(" ");
+  state.customPatterns.push({ id, name, degrees, builtin: false });
+  state.slots[i].patternId = id;
+  saveState();
+  renderAll();
+}
+
+function deletePattern(id) {
+  state.customPatterns = state.customPatterns.filter(p => p.id !== id);
+  state.slots.forEach(s => {
+    if (s.patternId === id) s.patternId = null;
+  });
+  saveState();
+  renderAll();
+}
+
+function onRangeChange(i, which, value) {
+  state.slots[i][which] = value;
+  saveState();
+  renderAll();
+}
+
+function setRangeTarget(i, which) {
+  rangeTarget = { slotIndex: i, which: which };
+}
+
+// ---------- Piano ----------
+function renderPiano() {
+  const piano = document.getElementById("piano");
+  let html = "";
+  let whiteIndex = 0;
+  const whiteKeyWidth = 22;
+
+  // first pass: white keys
+  let whiteHtml = "";
+  const whiteMidis = [];
+  for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
+    if (isWhite(m)) {
+      whiteMidis.push(m);
+      const label = (m % 12 === 0) ? midiToName(m) : "";
+      whiteHtml += '<div class="white-key key" data-midi="' + m + '" onclick="onKeyTap(' + m + ')">' +
+        (label ? '<span class="label">' + label + '</span>' : '') + '</div>';
+    }
+  }
+
+  // second pass: black keys positioned absolutely
+  let blackHtml = "";
+  let wCount = 0;
+  for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
+    if (isWhite(m)) {
+      wCount++;
+    } else {
+      const leftPx = wCount * whiteKeyWidth - (whiteKeyWidth * 0.28);
+      blackHtml += '<div class="black-key key" data-midi="' + m + '" style="left:' + leftPx + 'px" onclick="event.stopPropagation(); onKeyTap(' + m + ')"></div>';
+    }
+  }
+
+  piano.innerHTML = whiteHtml + blackHtml;
+}
+
+function onKeyTap(midi) {
+  const name = midiToName(midi);
+  if (rangeTarget) {
+    state.slots[rangeTarget.slotIndex][rangeTarget.which] = name;
+    saveState();
+    renderAll();
+  }
+}
+
+// ---------- Tempo ----------
+document.getElementById("tempo").addEventListener("input", function() {
+  state.tempo = parseInt(this.value, 10);
+  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
+  saveState();
+});
+
+// ---------- Init ----------
+window.toggleSlot = toggleSlot;
+window.onPatternChange = onPatternChange;
+window.addCustomPattern = addCustomPattern;
+window.deletePattern = deletePattern;
+window.onRangeChange = onRangeChange;
+window.setRangeTarget = setRangeTarget;
+window.playSlot = playSlot;
+window.onKeyTap = onKeyTap;
+
+renderAll();
+</script>
+</body>
+</html>
