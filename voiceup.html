@@ -25,9 +25,31 @@
     --key-in-pattern: #d9776b;
     --key-active-outline: #ffffff;
     --key-in-pattern-outline: #7a2e24;
+    --app-font-size: 15px;
+  }
+  html[data-theme="dark"] {
+    --bg: #14171a;
+    --card: #1f2327;
+    --card-border: #33383d;
+    --text: #f2f2f0;
+    --text-secondary: #c8cacc;
+    --text-muted: #9a9d9f;
+    --accent-bg: #2d6a4f;
+    --accent-text: #b7e4c7;
+    --accent: #6fcf97;
+    --accent-strong: #2d6a4f;
+    --input-bg: #14171a;
+    --danger: #e0776d;
+    --key-white: #2a2e32;
+    --key-white-border: #444a50;
+    --key-black: #0d0f11;
+    --key-active: #6fcf97;
+    --key-in-pattern: #b3453a;
+    --key-active-outline: #0d0f11;
+    --key-in-pattern-outline: #f2c4bd;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    html[data-theme="auto"] {
       --bg: #14171a;
       --card: #1f2327;
       --card-border: #33383d;
@@ -57,21 +79,175 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: var(--app-font-size);
     padding: 12px;
     -webkit-tap-highlight-color: transparent;
   }
 
   h1 {
     text-align: center;
-    font-size: 18px;
+    font-size: 1.3em;
     font-weight: 600;
     margin: 4px 0 14px;
     letter-spacing: 0.2px;
+    position: relative;
+  }
+
+  .settings-gear-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 4px;
+    color: var(--text-secondary);
+    font-size: 1.4em;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  /* ---------- Overlays (settings panel, note picker) ---------- */
+  .overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 50;
+    display: none;
+  }
+  .overlay-backdrop.show { display: block; }
+
+  .settings-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(320px, 88vw);
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px;
+    z-index: 51;
+    display: none;
+  }
+  .settings-overlay.show { display: block; }
+
+  .settings-overlay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .settings-overlay-header .title {
+    font-size: 1em;
+    font-weight: 500;
+  }
+  .settings-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .settings-section {
+    background: var(--input-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .settings-section:last-child { margin-bottom: 0; }
+  .settings-section-label {
+    font-size: 0.87em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .settings-row-between {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 0.87em;
+  }
+  .theme-btn-group {
+    display: flex;
+    gap: 6px;
+  }
+  .theme-btn-group button {
+    flex: 1;
+    font-size: 0.8em;
+    padding: 6px;
+  }
+  .theme-btn-group button.selected {
+    background: var(--accent-strong);
+    color: #ffffff;
+    border-color: var(--accent-strong);
+  }
+  .octave-btn-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .octave-btn-group button {
+    flex: 1;
+    min-width: 50px;
+    font-size: 0.75em;
+    padding: 6px 4px;
+  }
+  .octave-btn-group button.selected {
+    background: var(--accent-strong);
+    color: #ffffff;
+    border-color: var(--accent-strong);
+  }
+
+  /* Note picker overlay - anchored left or right depending on which field opened it */
+  .note-picker-overlay {
+    position: fixed;
+    top: 25%;
+    height: 50vh;
+    width: min(160px, 40vw);
+    background: var(--card);
+    border: 0.5px solid var(--accent-strong);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    overflow-y: auto;
+    z-index: 51;
+    display: none;
+    padding: 4px;
+  }
+  .note-picker-overlay.show { display: block; }
+  .note-picker-overlay.align-left { left: 12px; }
+  .note-picker-overlay.align-right { right: 12px; }
+
+  .note-picker-item {
+    padding: 6px 8px;
+    font-size: 0.87em;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .note-picker-item.selected {
+    background: var(--accent-strong);
+    color: #ffffff;
+  }
+
+  .range-field {
+    flex: 1;
+    background: var(--input-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.8em;
+    text-align: center;
+    cursor: pointer;
+  }
+  .range-field.engaged {
+    border-color: var(--accent-strong);
   }
 
   select, button {
     font-family: inherit;
-    font-size: 12px;
+    font-size: 1em;
     background: var(--input-bg);
     color: var(--text);
     border: 0.5px solid var(--card-border);
@@ -111,7 +287,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 0.92em;
     font-weight: 600;
     color: var(--text-muted);
     flex-shrink: 0;
@@ -123,7 +299,7 @@
   }
 
   .slot-summary {
-    font-size: 13px;
+    font-size: 1.08em;
     font-weight: 500;
     flex: 1;
     color: var(--text-secondary);
@@ -162,7 +338,7 @@
     border: none;
     border-radius: 6px;
     padding: 8px 14px;
-    font-size: 12px;
+    font-size: 1em;
     font-weight: 500;
     white-space: nowrap;
     min-width: 44px;
@@ -198,7 +374,7 @@
     border: none;
     background: transparent;
     color: var(--danger);
-    font-size: 16px;
+    font-size: 1.33em;
     padding: 2px 4px;
     line-height: 1;
     cursor: pointer;
@@ -214,7 +390,7 @@
 
   .custom-pattern-add input {
     flex: 1;
-    font-size: 12px;
+    font-size: 1em;
     padding: 6px 8px;
     background: var(--input-bg);
     color: var(--text);
@@ -223,12 +399,12 @@
   }
 
   .custom-pattern-add button {
-    font-size: 12px;
+    font-size: 1em;
     padding: 6px 10px;
   }
 
   .range-note {
-    font-size: 11px;
+    font-size: 0.92em;
     color: var(--text-muted);
     margin-top: 4px;
   }
@@ -244,7 +420,7 @@
   .tempo-header {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 1.08em;
     margin-bottom: 6px;
   }
 
@@ -256,12 +432,12 @@
     text-align: center;
     margin: 6px 0 14px;
     min-height: 20px;
-    font-size: 13px;
+    font-size: 1.08em;
     color: var(--text-muted);
   }
 
   .now-playing .note {
-    font-size: 22px;
+    font-size: 1.83em;
     font-weight: 600;
     color: var(--accent);
     display: block;
@@ -310,7 +486,7 @@
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 8px;
+    font-size: 0.67em;
     color: var(--text-muted);
     pointer-events: none;
   }
@@ -336,7 +512,7 @@
   }
 
   .piano-hint {
-    font-size: 11px;
+    font-size: 0.92em;
     color: var(--text-muted);
     text-align: center;
     margin-top: 6px;
@@ -345,7 +521,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 11px; color: var(--text-muted); font-weight: 400;">v1.0</span></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.7</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 
 <div class="tempo-block">
   <div class="tempo-header">
@@ -367,7 +543,47 @@
 <div class="piano-wrap">
   <div class="piano" id="piano"></div>
 </div>
-<div class="piano-hint">Tap a key, or use the dropdowns in a slot, to set its range</div>
+<div class="piano-hint">Tap a key, or the Start/End fields, to set a slot's range. Tap any key to hear it.</div>
+
+<div class="overlay-backdrop" id="overlay-backdrop" onclick="closeAllOverlays()"></div>
+
+<div class="settings-overlay" id="settings-overlay">
+  <div class="settings-overlay-header">
+    <span class="title">Settings</span>
+    <button class="settings-close-btn" onclick="closeAllOverlays()" aria-label="Close">&times;</button>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Theme</div>
+    <div class="theme-btn-group" id="theme-btn-group">
+      <button data-theme-choice="light" onclick="setTheme('light')">Light</button>
+      <button data-theme-choice="dark" onclick="setTheme('dark')">Dark</button>
+      <button data-theme-choice="auto" onclick="setTheme('auto')">Auto</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-row-between">
+      <span>Font size</span>
+      <span id="font-size-val">15px</span>
+    </div>
+    <input type="range" id="font-size-slider" min="12" max="20" step="1" value="15">
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Piano width</div>
+    <div class="octave-btn-group" id="octave-btn-group">
+      <button data-octave-choice="1" onclick="setPianoOctaves(1)">1</button>
+      <button data-octave-choice="1.25" onclick="setPianoOctaves(1.25)">1.25</button>
+      <button data-octave-choice="1.5" onclick="setPianoOctaves(1.5)">1.5</button>
+      <button data-octave-choice="1.75" onclick="setPianoOctaves(1.75)">1.75</button>
+      <button data-octave-choice="2" onclick="setPianoOctaves(2)">2</button>
+    </div>
+    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 6px;">Octaves visible at once while a slot plays</div>
+  </div>
+</div>
+
+<div class="note-picker-overlay" id="note-picker-overlay"></div>
 
 <script>
 // ---------- Note utilities ----------
@@ -452,15 +668,29 @@ function saveState() {
 let state = loadState() || {
   customPatterns: [],
   slots: [
-    { patternId: "p1358531", low: "G2", high: "E5" },
-    { patternId: "p123454321", low: "D3", high: "A4" },
-    { patternId: "p8888531", low: "E3", high: "B4" },
-    { patternId: null, low: null, high: null },
-    { patternId: null, low: null, high: null }
+    { patternId: "p1358531", start: "G2", end: "E5" },
+    { patternId: "p123454321", start: "D3", end: "A4" },
+    { patternId: "p8888531", start: "E3", end: "B4" },
+    { patternId: null, start: null, end: null },
+    { patternId: null, start: null, end: null }
   ],
   tempo: 90,
-  expandedSlot: 0
+  expandedSlot: 0,
+  theme: "auto",
+  fontSize: 15,
+  pianoOctaves: 1.5
 };
+
+// migrate any old-format saved state (low/high fields) to start/end
+if (state.slots) {
+  state.slots.forEach(s => {
+    if (s.low !== undefined && s.start === undefined) { s.start = s.low; delete s.low; }
+    if (s.high !== undefined && s.end === undefined) { s.end = s.high; delete s.high; }
+  });
+}
+if (state.theme === undefined) state.theme = "auto";
+if (state.fontSize === undefined) state.fontSize = 15;
+if (state.pianoOctaves === undefined) state.pianoOctaves = 1.5;
 
 function allPatterns() {
   return BUILTIN_PATTERNS.concat(state.customPatterns);
@@ -573,16 +803,32 @@ function stopPlayback() {
 function highlightKeyAt(midi, delayMs, durMs) {
   const t1 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
-    if (el) {
-      el.classList.add("active");
-      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    }
+    if (el) el.classList.add("active");
   }, Math.max(0, delayMs));
   const t2 = setTimeout(() => {
     const el = document.querySelector('.key[data-midi="' + midi + '"]');
     if (el) el.classList.remove("active");
   }, Math.max(0, delayMs) + durMs);
   highlightTimeouts.push(t1, t2);
+}
+
+// scroll the piano container once so the given midi note is centred in view -
+// called once per step (not per note) so the view holds steady through a
+// whole chord+arpeggio rather than chasing every individual note
+function scrollPianoToCenter(midi, delayMs) {
+  const t1 = setTimeout(() => {
+    const wrap = document.querySelector(".piano-wrap");
+    const el = document.querySelector('.key[data-midi="' + midi + '"]');
+    if (wrap && el) {
+      const wrapRect = wrap.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const currentScroll = wrap.scrollLeft;
+      const elCenter = (elRect.left - wrapRect.left) + currentScroll + (elRect.width / 2);
+      const targetScroll = elCenter - (wrap.clientWidth / 2);
+      wrap.scrollTo({ left: targetScroll, behavior: "smooth" });
+    }
+  }, Math.max(0, delayMs));
+  highlightTimeouts.push(t1);
 }
 
 // mark/unmark a set of keys as "in the current step's pattern" (red), at a given
@@ -618,7 +864,7 @@ async function playSlot(slotIndex) {
   if (activeSlotIndex !== null) return;
 
   const slot = state.slots[slotIndex];
-  if (!slot.patternId || !slot.low || !slot.high) {
+  if (!slot.patternId || !slot.start || !slot.end) {
     document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': pattern or range not fully set</span>';
     return;
   }
@@ -628,13 +874,13 @@ async function playSlot(slotIndex) {
     return;
   }
 
-  const noteAMidi = nameToMidi(slot.low);
-  const noteBMidi = nameToMidi(slot.high);
+  const noteAMidi = nameToMidi(slot.start);
+  const noteBMidi = nameToMidi(slot.end);
   if (noteAMidi === null || noteBMidi === null) {
-    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': invalid range (' + slot.low + ' to ' + slot.high + ')</span>';
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': invalid range (' + slot.start + ' to ' + slot.end + ')</span>';
     return;
   }
-  // "low" set higher than "high" means a deliberate descending run - the app
+  // start set higher than end means a deliberate descending run - the app
   // plays root-by-root from whichever side is actually higher down to whichever
   // is actually lower, rather than treating this as an error.
   const descending = noteAMidi > noteBMidi;
@@ -688,14 +934,16 @@ async function playSlot(slotIndex) {
 
   let t = ctx.currentTime + 0.15;
 
-  function scheduleStep(rootMidi) {
+  function scheduleStep(rootMidi, isLastStep) {
     const chordTones = [0,4,7].map(iv => rootMidi + iv);
     const arpMidis = semis.map(iv => rootMidi + iv);
     const lastMidi = rootMidi + semis[semis.length - 1];
-    const allStepMidis = Array.from(new Set([...chordTones, ...arpMidis, lastMidi]));
+    const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
+    const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
     const stepStartTime = t;
 
-    // chord: quarter note, rings fully, no added silence before or after
+    // chord: quarter note, rings fully, no added silence before or after.
+    // All three chord tones show green together - no red during the chord.
     chordTones.forEach(m => scheduleNotePlayback(m, t, chordDur, myToken));
     const chordName = midiToSampleName(rootMidi);
     const chordDelay = (t - ctx.currentTime) * 1000;
@@ -703,8 +951,13 @@ async function playSlot(slotIndex) {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
     }, Math.max(0, chordDelay)));
-    highlightKeyAt(rootMidi, chordDelay, chordDur * 1000);
+    chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
     t += chordDur;
+
+    // arpeggio phase starts here - mark the whole arpeggio's note-shape in red
+    // for the duration of the arpeggio only (not the chord), with the single
+    // currently-sounding note popping green on top of that red backdrop
+    const arpPhaseStartTime = t;
 
     // arpeggio: eighth notes, immediately after chord
     semis.forEach(iv => {
@@ -720,27 +973,38 @@ async function playSlot(slotIndex) {
       t += noteDur;
     });
 
-    // repeat last arpeggio note once (eighth note), then straight into next chord
-    scheduleNotePlayback(lastMidi, t, noteDur, myToken);
-    const lastDelay = (t - ctx.currentTime) * 1000;
-    highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
-    t += noteDur;
+    // repeat the last arpeggio note once - EXCEPT on the very last step of the
+    // whole run, where nothing follows it and the repeat is unnecessary
+    if (!isLastStep) {
+      scheduleNotePlayback(lastMidi, t, noteDur, myToken);
+      const lastDelay = (t - ctx.currentTime) * 1000;
+      highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
+      t += noteDur;
+    }
 
-    // show the whole step's note-shape in red for the step's full duration
-    const stepDelay = (stepStartTime - ctx.currentTime) * 1000;
-    const stepDurMs = (t - stepStartTime) * 1000;
-    markPatternAt(allStepMidis, stepDelay, stepDurMs);
+    // red arpeggio-shape spans only the arpeggio phase (plus its repeated note),
+    // never the chord phase
+    const arpPhaseDelay = (arpPhaseStartTime - ctx.currentTime) * 1000;
+    const arpPhaseDurMs = (t - arpPhaseStartTime) * 1000;
+    markPatternAt(arpShapeMidis, arpPhaseDelay, arpPhaseDurMs);
+
+    // scroll the piano once per step so this step's note-span is centred,
+    // holding steady through the whole chord+arpeggio rather than chasing each note
+    const stepMinMidi = Math.min(...allStepMidis);
+    const stepMaxMidi = Math.max(...allStepMidis);
+    const centerMidi = Math.round((stepMinMidi + stepMaxMidi) / 2);
+    scrollPianoToCenter(centerMidi, chordDelay);
   }
 
+  const rootSequence = [];
   if (descending) {
-    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) {
-      scheduleStep(root);
-    }
+    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) rootSequence.push(root);
   } else {
-    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) {
-      scheduleStep(root);
-    }
+    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) rootSequence.push(root);
   }
+  rootSequence.forEach((root, idx) => {
+    scheduleStep(root, idx === rootSequence.length - 1);
+  });
 
   const totalMs = (t - ctx.currentTime) * 1000;
   highlightTimeouts.push(setTimeout(() => {
@@ -750,13 +1014,13 @@ async function playSlot(slotIndex) {
 }
 
 // ---------- Rendering ----------
-let rangeTarget = null; // { slotIndex, which: 'low'|'high' } - set when a range dropdown is focused, so piano taps know where to apply
+let rangeTarget = null; // { slotIndex, which: 'start'|'end' } - set when a range field is tapped, so the note picker knows where to apply
 
 function slotSummaryText(slot) {
-  if (!slot.patternId || !slot.low || !slot.high) return "Not set";
+  if (!slot.patternId || !slot.start || !slot.end) return "Not set";
   const p = getPattern(slot.patternId);
   const pname = p ? p.name : "?";
-  return pname + " \u00b7 " + slot.low + " to " + slot.high;
+  return pname + " \u00b7 " + slot.start + " to " + slot.end;
 }
 
 function buildPatternOptions(selectedId) {
@@ -765,14 +1029,6 @@ function buildPatternOptions(selectedId) {
     html += '<option value="' + p.id + '"' + (p.id === selectedId ? " selected" : "") + '>' + p.name + '</option>';
   });
   html += '<option value="__add__">+ Add new pattern</option>';
-  return html;
-}
-
-function buildNoteOptions(selectedName) {
-  let html = "";
-  ALL_NOTES.forEach(n => {
-    html += '<option value="' + n.name + '"' + (n.name === selectedName ? " selected" : "") + '>' + n.name + '</option>';
-  });
   return html;
 }
 
@@ -817,8 +1073,8 @@ function renderSlotBody(slot, i, compact) {
   html += '</div>';
 
   html += '<div class="row">';
-  html += '<select onchange="onRangeChange(' + i + ', \'low\', this.value)" onfocus="setRangeTarget(' + i + ', \'low\')">' + buildNoteOptions(slot.low) + '</select>';
-  html += '<select onchange="onRangeChange(' + i + ', \'high\', this.value)" onfocus="setRangeTarget(' + i + ', \'high\')">' + buildNoteOptions(slot.high) + '</select>';
+  html += '<div class="range-field" onclick="openNotePicker(' + i + ', \'start\', \'left\', event)">' + (slot.start || "Start") + '</div>';
+  html += '<div class="range-field" onclick="openNotePicker(' + i + ', \'end\', \'right\', event)">' + (slot.end || "End") + '</div>';
   html += '</div>';
 
   return html;
@@ -892,29 +1148,112 @@ function deletePattern(id) {
   renderAll();
 }
 
-function onRangeChange(i, which, value) {
-  state.slots[i][which] = value;
+// ---------- Note picker overlay ----------
+function openNotePicker(slotIndex, which, align, evt) {
+  if (evt) evt.stopPropagation();
+  rangeTarget = { slotIndex: slotIndex, which: which };
+  const overlay = document.getElementById("note-picker-overlay");
+  const currentName = state.slots[slotIndex][which];
+
+  let html = "";
+  ALL_NOTES.forEach(n => {
+    html += '<div class="note-picker-item' + (n.name === currentName ? " selected" : "") +
+      '" data-midi="' + n.midi + '" onclick="pickNoteForRange(' + n.midi + ')">' + n.name + '</div>';
+  });
+  overlay.innerHTML = html;
+  overlay.classList.remove("align-left", "align-right");
+  overlay.classList.add(align === "left" ? "align-left" : "align-right");
+  overlay.classList.add("show");
+  document.getElementById("overlay-backdrop").classList.add("show");
+
+  // scroll the picker so the current selection is roughly in view
+  if (currentName) {
+    setTimeout(() => {
+      const sel = overlay.querySelector(".selected");
+      if (sel) sel.scrollIntoView({ block: "center" });
+    }, 0);
+  }
+}
+
+function pickNoteForRange(midi) {
+  if (!rangeTarget) return;
+  const name = midiToName(midi);
+  state.slots[rangeTarget.slotIndex][rangeTarget.which] = name;
   saveState();
+  playNoteOnce(midi);
+  closeAllOverlays();
   renderAll();
 }
 
-function setRangeTarget(i, which) {
-  rangeTarget = { slotIndex: i, which: which };
+// ---------- Settings overlay ----------
+function openSettings() {
+  document.getElementById("settings-overlay").classList.add("show");
+  document.getElementById("overlay-backdrop").classList.add("show");
+  updateSettingsUI();
 }
 
+function closeAllOverlays() {
+  document.getElementById("settings-overlay").classList.remove("show");
+  document.getElementById("note-picker-overlay").classList.remove("show");
+  document.getElementById("overlay-backdrop").classList.remove("show");
+  rangeTarget = null;
+}
+
+function updateSettingsUI() {
+  document.querySelectorAll("#theme-btn-group button").forEach(b => {
+    b.classList.toggle("selected", b.dataset.themeChoice === state.theme);
+  });
+  document.getElementById("font-size-slider").value = state.fontSize;
+  document.getElementById("font-size-val").textContent = state.fontSize + "px";
+  document.querySelectorAll("#octave-btn-group button").forEach(b => {
+    b.classList.toggle("selected", parseFloat(b.dataset.octaveChoice) === state.pianoOctaves);
+  });
+}
+
+function setTheme(theme) {
+  state.theme = theme;
+  document.documentElement.setAttribute("data-theme", theme);
+  saveState();
+  updateSettingsUI();
+}
+
+function setPianoOctaves(oct) {
+  state.pianoOctaves = oct;
+  saveState();
+  updateSettingsUI();
+  renderPiano();
+}
+
+document.getElementById("font-size-slider").addEventListener("input", function() {
+  state.fontSize = parseInt(this.value, 10);
+  document.documentElement.style.setProperty("--app-font-size", state.fontSize + "px");
+  document.getElementById("font-size-val").textContent = state.fontSize + "px";
+  saveState();
+});
+
+// ---------- Tempo ----------
+document.getElementById("tempo").addEventListener("input", function() {
+  state.tempo = parseInt(this.value, 10);
+  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
+  saveState();
+});
+
 // ---------- Piano ----------
+// how many white keys make up the visible window, based on the chosen octave count,
+// plus one extra white key of padding on each side (per-key math kept simple by
+// working in semitones then converting to an approximate white-key width)
+function getPianoWindowSemitones() {
+  return Math.round(state.pianoOctaves * 12) + 2; // +2 for one padding key each side (approx)
+}
+
 function renderPiano() {
   const piano = document.getElementById("piano");
-  let html = "";
-  let whiteIndex = 0;
   const whiteKeyWidth = 22;
 
   // first pass: white keys
   let whiteHtml = "";
-  const whiteMidis = [];
   for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
     if (isWhite(m)) {
-      whiteMidis.push(m);
       const label = (m % 12 === 0) ? midiToName(m) : "";
       whiteHtml += '<div class="white-key key" data-midi="' + m + '" onclick="onKeyTap(' + m + ')">' +
         (label ? '<span class="label">' + label + '</span>' : '') + '</div>';
@@ -934,23 +1273,45 @@ function renderPiano() {
   }
 
   piano.innerHTML = whiteHtml + blackHtml;
+
+  // size the visible viewport (piano-wrap) to roughly the chosen number of white keys,
+  // so the window shows approximately the requested octave span without needing to scroll
+  // to see it, height scales proportionally to the width setting
+  const approxWhiteKeysVisible = Math.round(getPianoWindowSemitones() * 7 / 12);
+  const wrap = document.querySelector(".piano-wrap");
+  if (wrap) {
+    wrap.style.maxWidth = (approxWhiteKeysVisible * whiteKeyWidth) + "px";
+    wrap.style.margin = "0 auto";
+  }
 }
 
 function onKeyTap(midi) {
   const name = midiToName(midi);
+  playNoteOnce(midi);
   if (rangeTarget) {
     state.slots[rangeTarget.slotIndex][rangeTarget.which] = name;
     saveState();
+    closeAllOverlays();
     renderAll();
   }
 }
 
-// ---------- Tempo ----------
-document.getElementById("tempo").addEventListener("input", function() {
-  state.tempo = parseInt(this.value, 10);
-  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
-  saveState();
-});
+// play a single note once, for audible feedback when tapping the piano -
+// independent of any slot playback, always available
+async function playNoteOnce(midi) {
+  const sampleName = midiToSampleName(midi);
+  try {
+    const buf = await getBufferForNote(sampleName);
+    const ctx = getCtx();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(1, ctx.currentTime);
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(ctx.currentTime);
+  } catch (e) { /* sample not available, ignore */ }
+}
 
 // ---------- Tap tempo ----------
 let tapTimes = [];
@@ -980,11 +1341,19 @@ window.toggleSlot = toggleSlot;
 window.onPatternChange = onPatternChange;
 window.addCustomPattern = addCustomPattern;
 window.deletePattern = deletePattern;
-window.onRangeChange = onRangeChange;
-window.setRangeTarget = setRangeTarget;
 window.playSlot = playSlot;
 window.onKeyTap = onKeyTap;
 window.onTapTempo = onTapTempo;
+window.openNotePicker = openNotePicker;
+window.pickNoteForRange = pickNoteForRange;
+window.openSettings = openSettings;
+window.closeAllOverlays = closeAllOverlays;
+window.setTheme = setTheme;
+window.setPianoOctaves = setPianoOctaves;
+
+// Apply persisted theme and font size immediately on load
+document.documentElement.setAttribute("data-theme", state.theme);
+document.documentElement.style.setProperty("--app-font-size", state.fontSize + "px");
 
 renderAll();
 preloadAllSamples();
