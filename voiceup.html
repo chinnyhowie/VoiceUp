@@ -44,8 +44,9 @@
 <h1>VoiceUp &mdash; tone and timing test</h1>
 <p style="color:#9a9d9f; font-size:13px;">Testing the 1-2-3-4-5-4-3-2-1 pattern, richer harmonic tone, on C3 then C#3</p>
 
-<button onclick="playSine()">Play OLD tone (plain sine)</button>
-<button onclick="playRich()">Play NEW tone (richer harmonic)</button>
+<button onclick="playRich()">Richer harmonic (previous)</button>
+<button onclick="playSaw()">Filtered sawtooth</button>
+<button onclick="playPluck()">Karplus-Strong pluck</button>
 
 <div class="status" id="status"></div>
 
@@ -115,39 +116,106 @@ function playChordRich(rootMidi, startTime, duration) {
   [0,4,7].forEach(iv => playToneRich(midiToFreq(rootMidi + iv), startTime, duration));
 }
 
+// Filtered sawtooth: bright, dense harmonic content, tamed with a lowpass filter
+function playToneSaw(freq, startTime, duration) {
+  const osc = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(freq, startTime);
+
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(freq * 6, startTime);
+  filter.Q.value = 0.7;
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.22, startTime + 0.015);
+  gain.gain.setValueAtTime(0.22, startTime + duration - 0.05);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+function playChordSaw(rootMidi, startTime, duration) {
+  [0,4,7].forEach(iv => playToneSaw(midiToFreq(rootMidi + iv), startTime, duration));
+}
+
+// Karplus-Strong plucked string synthesis via a noise burst through a feedback delay
+function playTonePluck(freq, startTime, duration) {
+  const sampleRate = ctx.sampleRate;
+  const bufferSize = Math.ceil(sampleRate * (duration + 0.3));
+  const buffer = ctx.createBuffer(1, bufferSize, sampleRate);
+  const data = buffer.getChannelData(0);
+
+  const period = Math.round(sampleRate / freq);
+  const ring = new Float32Array(period);
+  for (let i = 0; i < period; i++) ring[i] = Math.random() * 2 - 1;
+
+  let idx = 0;
+  const damping = 0.995;
+  for (let i = 0; i < bufferSize; i++) {
+    const next = ring[idx];
+    data[i] = next;
+    const avg = damping * 0.5 * (ring[idx] + ring[(idx + 1) % period]);
+    ring[idx] = avg;
+    idx = (idx + 1) % period;
+  }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.9, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration + 0.25);
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(startTime);
+  src.stop(startTime + duration + 0.3);
+}
+function playChordPluck(rootMidi, startTime, duration) {
+  [0,4,7].forEach(iv => playTonePluck(midiToFreq(rootMidi + iv), startTime, duration));
+}
+
 function updateStatus(text) {
   document.getElementById("status").textContent = text;
 }
 
-function runSequence(useRich) {
+function noteName(midi) {
+  return ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][midi % 12] + (Math.floor(midi/12)-1);
+}
+
+function runSequence(tone) {
   const tempo = 90;
   const noteDur = 60 / tempo;      // eighth-note length used as the base unit here
   const chordDur = noteDur * 1.2;
   const pauseDur = noteDur * 2;    // pause = two arpeggio-note-lengths (a quarter note if notes are eighths)
 
-  const playTone = useRich ? playToneRich : playToneSine;
-  const playChord = useRich ? playChordRich : playChordSine;
+  let playTone, playChord;
+  if (tone === "rich") { playTone = playToneRich; playChord = playChordRich; }
+  else if (tone === "saw") { playTone = playToneSaw; playChord = playChordSaw; }
+  else { playTone = playTonePluck; playChord = playChordPluck; }
 
   let t = ctx.currentTime + 0.1;
   let timeouts = [];
 
-  function scheduleStep(rootMidi) {
-    const rootName = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][rootMidi % 12] + (Math.floor(rootMidi/12)-1);
-
-    // 1. opening chord
-    playChord(rootMidi, t, chordDur);
-    timeouts.push(setTimeout(() => updateStatus(rootName + " chord"), (t - ctx.currentTime) * 1000));
-    t += chordDur;
-
-    // 2. pause
-    t += pauseDur;
+  function scheduleStep(rootMidi, withChord) {
+    if (withChord) {
+      // 1. opening/next chord
+      playChord(rootMidi, t, chordDur);
+      timeouts.push(setTimeout(() => updateStatus(noteName(rootMidi) + " chord"), (t - ctx.currentTime) * 1000));
+      t += chordDur;
+      // 2. pause
+      t += pauseDur;
+    }
 
     // 3. arpeggio
-    semis_123454321.forEach((iv, idx) => {
+    semis_123454321.forEach((iv) => {
       const noteMidi = rootMidi + iv;
       playTone(midiToFreq(noteMidi), t, noteDur * 0.9);
-      const noteName = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][noteMidi % 12] + (Math.floor(noteMidi/12)-1);
-      timeouts.push(setTimeout(() => updateStatus(noteName), (t - ctx.currentTime) * 1000));
+      timeouts.push(setTimeout(() => updateStatus(noteName(noteMidi)), (t - ctx.currentTime) * 1000));
       t += noteDur;
     });
 
@@ -155,23 +223,19 @@ function runSequence(useRich) {
     const lastMidi = rootMidi + semis_123454321[semis_123454321.length - 1];
     playTone(midiToFreq(lastMidi), t, noteDur * 0.9);
     t += noteDur;
-
-    // 5. closing chord (same root) - immediately, no pause
-    playChord(rootMidi, t, chordDur);
-    timeouts.push(setTimeout(() => updateStatus(rootName + " chord (closing)"), (t - ctx.currentTime) * 1000));
-    t += chordDur;
   }
 
-  // Step on C3
-  scheduleStep(C3);
-  // Immediately (no pause) the next semitone's chord - this IS the closing chord of next step
-  scheduleStep(C3 + 1);
+  // Step on C3 (with its opening chord)
+  scheduleStep(C3, true);
+  // Immediately (no pause) the next semitone's chord, then pause, then its arpeggio
+  scheduleStep(C3 + 1, true);
 
   return timeouts;
 }
 
-function playSine() { runSequence(false); }
-function playRich() { runSequence(true); }
+function playRich() { runSequence("rich"); }
+function playSaw() { runSequence("saw"); }
+function playPluck() { runSequence("pluck"); }
 </script>
 </body>
 </html>
