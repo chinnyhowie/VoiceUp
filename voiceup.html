@@ -447,7 +447,7 @@
   }
 
   .piano-wrap {
-    overflow-x: hidden;
+    overflow-x: auto;
     background: var(--card);
     border: 0.5px solid var(--card-border);
     border-radius: 10px;
@@ -458,7 +458,7 @@
   .piano {
     position: relative;
     height: var(--piano-height, 90px);
-    width: 100%;
+    width: var(--piano-total-width, 100%);
   }
 
   .white-key {
@@ -523,7 +523,8 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.7</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.9</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
   <div class="tempo-header">
@@ -573,7 +574,7 @@
   </div>
 
   <div class="settings-section">
-    <div class="settings-section-label">Piano width</div>
+    <div class="settings-section-label">Number of keys shown</div>
     <div class="octave-btn-group" id="octave-btn-group">
       <button data-octave-choice="1" onclick="setPianoOctaves(1)">1</button>
       <button data-octave-choice="1.25" onclick="setPianoOctaves(1.25)">1.25</button>
@@ -1272,8 +1273,8 @@ function getPianoWindowSemitones() {
   return Math.round(state.pianoOctaves * 12) + 2;
 }
 
-// total count of white keys across the full 88-key range - used to size each key
-// so the whole piano exactly fills the available width with no horizontal scrolling
+// total count of white keys across the full 88-key range - the piano always
+// renders all of them, but only a subset is sized to be visible at once (below)
 function countWhiteKeys() {
   let count = 0;
   for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
@@ -1282,20 +1283,31 @@ function countWhiteKeys() {
   return count;
 }
 
+// number of white keys that should be visible on screen at once, derived from
+// the "Number of keys shown" setting (state.pianoOctaves), converted from
+// semitones to an equivalent white-key count (~7 white keys per 12 semitones)
+function getVisibleWhiteKeyCount() {
+  const semitones = getPianoWindowSemitones();
+  return Math.max(4, Math.round(semitones * 7 / 12));
+}
+
 function renderPiano() {
   const piano = document.getElementById("piano");
   const wrap = document.querySelector(".piano-wrap");
 
-  // compute white key width from the actual available width, so the piano always
-  // fills the screen edge to edge with no need to scroll horizontally, and every
-  // key (white and black) scales proportionally from that one width value
-  const totalWhiteKeys = countWhiteKeys();
+  // size each white key so that only the chosen number of keys fills the
+  // available width exactly; the full 88-key range still renders, it just
+  // extends off-screen and is reached via horizontal scroll/auto-scroll
+  const visibleWhiteKeys = getVisibleWhiteKeyCount();
   const availableWidth = wrap ? wrap.clientWidth - 16 : 320; // minus the wrap's own padding
-  const whiteKeyWidth = Math.max(6, availableWidth / totalWhiteKeys);
+  const whiteKeyWidth = Math.max(6, availableWidth / visibleWhiteKeys);
   const pianoHeight = whiteKeyWidth * (90 / 22); // keep the original width:height ratio
+  const totalWhiteKeys = countWhiteKeys();
+  const pianoTotalWidth = whiteKeyWidth * totalWhiteKeys;
 
   document.documentElement.style.setProperty("--white-key-width", whiteKeyWidth + "px");
   document.documentElement.style.setProperty("--piano-height", pianoHeight + "px");
+  document.documentElement.style.setProperty("--piano-total-width", pianoTotalWidth + "px");
 
   // first pass: white keys
   let whiteHtml = "";
