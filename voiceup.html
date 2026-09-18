@@ -527,11 +527,6 @@
     font-weight: 600;
   }
 
-  .pos-note-label {
-    font-size: 0.75em;
-    color: var(--text-muted);
-  }
-
   .pos-step {
     text-align: right;
   }
@@ -651,7 +646,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.10</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.11</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1007,7 +1002,7 @@ function updatePositionIndicator(descending, arpHighName, stepNumber, totalSteps
   el.innerHTML =
     '<div class="pos-top-row">' +
       '<div class="pos-direction">' + dirIcon + '<span>' + dirLabel + '</span></div>' +
-      '<div class="pos-note"><span class="pos-note-val">' + arpHighName + '</span><span class="pos-note-label">arpeggio high</span></div>' +
+      '<div class="pos-note"><span class="pos-note-val">' + arpHighName + '</span></div>' +
       '<div class="pos-step"><div class="pos-step-label">step</div><div class="pos-step-val">' + stepNumber + ' / ' + totalSteps + '</div></div>' +
     '</div>' +
     '<div class="pos-blocks">' + blocks + '</div>' +
@@ -1102,7 +1097,7 @@ async function playSlot(slotIndex) {
 
   let t = ctx.currentTime + 0.15;
 
-  function scheduleStep(rootMidi, isLastStep, stepNumber, totalSteps) {
+  function scheduleStep(rootMidi, isLastStep, stepNumber, totalSteps, stepDescending) {
     const chordTones = [0,4,7].map(iv => rootMidi + iv);
     const arpMidis = semis.map(iv => rootMidi + iv);
     const lastMidi = rootMidi + semis[semis.length - 1];
@@ -1119,7 +1114,7 @@ async function playSlot(slotIndex) {
     highlightTimeouts.push(setTimeout(() => {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
-      updatePositionIndicator(descending, midiToName(arpeggioHighMidi), stepNumber, totalSteps, lowMidi, highMidi);
+      updatePositionIndicator(stepDescending, midiToName(arpeggioHighMidi), stepNumber, totalSteps, lowMidi, highMidi);
     }, Math.max(0, chordDelay)));
     chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
     t += chordDur;
@@ -1166,14 +1161,27 @@ async function playSlot(slotIndex) {
     scrollPianoToCenter(centerMidi, chordDelay);
   }
 
-  const rootSequence = [];
+  const oneWaySequence = [];
   if (descending) {
-    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) rootSequence.push(root);
+    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) oneWaySequence.push(root);
   } else {
-    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) rootSequence.push(root);
+    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) oneWaySequence.push(root);
   }
+
+  // Reverse-at-end: after reaching the far boundary, play the same roots back
+  // down to the start. The boundary root itself isn't repeated back-to-back,
+  // so the return leg is the one-way sequence reversed, minus its own last
+  // (turnaround) root.
+  let rootSequence = oneWaySequence;
+  if (slot.reverseAtEnd && oneWaySequence.length > 1) {
+    const returnLeg = oneWaySequence.slice(0, -1).reverse();
+    rootSequence = oneWaySequence.concat(returnLeg);
+  }
+
   rootSequence.forEach((root, idx) => {
-    scheduleStep(root, idx === rootSequence.length - 1, idx + 1, rootSequence.length);
+    const onReturnLeg = idx >= oneWaySequence.length;
+    const stepDescending = onReturnLeg ? !descending : descending;
+    scheduleStep(root, idx === rootSequence.length - 1, idx + 1, rootSequence.length, stepDescending);
   });
 
   const totalMs = (t - ctx.currentTime) * 1000;
