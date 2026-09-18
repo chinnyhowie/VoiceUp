@@ -362,6 +362,48 @@
     align-items: center;
   }
 
+  .reverse-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  .reverse-row .reverse-label {
+    font-size: 0.94em;
+  }
+
+  .toggle-switch {
+    width: 38px;
+    height: 21px;
+    border-radius: 11px;
+    background: var(--card-border);
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .toggle-switch.on {
+    background: var(--accent);
+  }
+
+  .toggle-switch .knob {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.15s ease;
+  }
+
+  .toggle-switch.on .knob {
+    left: 19px;
+  }
+
   .row select { flex: 1; }
 
   .pattern-row {
@@ -446,6 +488,92 @@
     margin-bottom: 2px;
   }
 
+  .position-indicator {
+    display: none;
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 6px 0 14px;
+  }
+
+  .position-indicator.visible {
+    display: block;
+  }
+
+  .pos-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .pos-direction {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+  }
+
+  .pos-note {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  .pos-note-val {
+    font-size: 1.25em;
+    font-weight: 600;
+  }
+
+  .pos-note-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+  }
+
+  .pos-step {
+    text-align: right;
+  }
+
+  .pos-step-label {
+    font-size: 0.7em;
+    color: var(--text-muted);
+  }
+
+  .pos-step-val {
+    font-size: 0.92em;
+    font-weight: 600;
+  }
+
+  .pos-blocks {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    margin-top: 8px;
+  }
+
+  .pos-block {
+    height: 6px;
+    border-radius: 2px;
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+  }
+
+  .pos-block.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .pos-bounds {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 0.7em;
+    color: var(--text-muted);
+  }
+
   .piano-wrap {
     overflow-x: auto;
     background: var(--card);
@@ -523,7 +651,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.9</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.10</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -541,7 +669,7 @@
 
 <div id="portrait-slots"></div>
 
-<div style="height: 64px;"></div>
+<div class="position-indicator" id="position-indicator"></div>
 
 <div class="piano-wrap">
   <div class="piano" id="piano"></div>
@@ -671,11 +799,11 @@ function saveState() {
 let state = loadState() || {
   customPatterns: [],
   slots: [
-    { patternId: "p1358531", start: "G2", end: "E5" },
-    { patternId: "p123454321", start: "D3", end: "A4" },
-    { patternId: "p8888531", start: "E3", end: "B4" },
-    { patternId: null, start: null, end: null },
-    { patternId: null, start: null, end: null }
+    { patternId: "p1358531", start: "G2", end: "E5", reverseAtEnd: false },
+    { patternId: "p123454321", start: "D3", end: "A4", reverseAtEnd: false },
+    { patternId: "p8888531", start: "E3", end: "B4", reverseAtEnd: false },
+    { patternId: null, start: null, end: null, reverseAtEnd: false },
+    { patternId: null, start: null, end: null, reverseAtEnd: false }
   ],
   tempo: 90,
   expandedSlot: 0,
@@ -689,6 +817,7 @@ if (state.slots) {
   state.slots.forEach(s => {
     if (s.low !== undefined && s.start === undefined) { s.start = s.low; delete s.low; }
     if (s.high !== undefined && s.end === undefined) { s.end = s.high; delete s.high; }
+    if (s.reverseAtEnd === undefined) s.reverseAtEnd = false;
   });
 }
 if (state.theme === undefined) state.theme = "auto";
@@ -799,6 +928,7 @@ function stopPlayback() {
   });
   activeAudioSources = [];
   document.getElementById("now-playing").innerHTML = "";
+  clearPositionIndicator();
   activeSlotIndex = null;
   renderAll();
 }
@@ -855,6 +985,41 @@ function markPatternAt(midis, delayMs, durMs) {
 function updateNowPlaying(noteName) {
   // Intentionally a no-op: the piano's own highlighting already shows what's
   // playing clearly, so the note-name text display has been removed.
+}
+
+// Updates the position indicator bar (direction, arpeggio-high note, step
+// count, and the block progress bar) - called once per step, at the same
+// moment the chord for that step starts sounding.
+function updatePositionIndicator(descending, arpHighName, stepNumber, totalSteps, lowMidi, highMidi) {
+  const el = document.getElementById("position-indicator");
+  if (!el) return;
+
+  const dirIcon = descending
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>';
+  const dirLabel = descending ? "Descending" : "Ascending";
+
+  let blocks = "";
+  for (let b = 1; b <= totalSteps; b++) {
+    blocks += '<div class="pos-block' + (b <= stepNumber ? ' filled' : '') + '"></div>';
+  }
+
+  el.innerHTML =
+    '<div class="pos-top-row">' +
+      '<div class="pos-direction">' + dirIcon + '<span>' + dirLabel + '</span></div>' +
+      '<div class="pos-note"><span class="pos-note-val">' + arpHighName + '</span><span class="pos-note-label">arpeggio high</span></div>' +
+      '<div class="pos-step"><div class="pos-step-label">step</div><div class="pos-step-val">' + stepNumber + ' / ' + totalSteps + '</div></div>' +
+    '</div>' +
+    '<div class="pos-blocks">' + blocks + '</div>' +
+    '<div class="pos-bounds"><span>' + midiToName(lowMidi) + '</span><span>' + midiToName(highMidi) + '</span></div>';
+  el.classList.add("visible");
+}
+
+function clearPositionIndicator() {
+  const el = document.getElementById("position-indicator");
+  if (!el) return;
+  el.innerHTML = "";
+  el.classList.remove("visible");
 }
 
 async function playSlot(slotIndex) {
@@ -937,13 +1102,14 @@ async function playSlot(slotIndex) {
 
   let t = ctx.currentTime + 0.15;
 
-  function scheduleStep(rootMidi, isLastStep) {
+  function scheduleStep(rootMidi, isLastStep, stepNumber, totalSteps) {
     const chordTones = [0,4,7].map(iv => rootMidi + iv);
     const arpMidis = semis.map(iv => rootMidi + iv);
     const lastMidi = rootMidi + semis[semis.length - 1];
     const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
     const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
     const stepStartTime = t;
+    const arpeggioHighMidi = Math.max(...arpMidis);
 
     // chord: quarter note, rings fully, no added silence before or after.
     // All three chord tones show green together - no red during the chord.
@@ -953,6 +1119,7 @@ async function playSlot(slotIndex) {
     highlightTimeouts.push(setTimeout(() => {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
+      updatePositionIndicator(descending, midiToName(arpeggioHighMidi), stepNumber, totalSteps, lowMidi, highMidi);
     }, Math.max(0, chordDelay)));
     chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
     t += chordDur;
@@ -1006,7 +1173,7 @@ async function playSlot(slotIndex) {
     for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) rootSequence.push(root);
   }
   rootSequence.forEach((root, idx) => {
-    scheduleStep(root, idx === rootSequence.length - 1);
+    scheduleStep(root, idx === rootSequence.length - 1, idx + 1, rootSequence.length);
   });
 
   const totalMs = (t - ctx.currentTime) * 1000;
@@ -1080,7 +1247,18 @@ function renderSlotBody(slot, i, compact) {
   html += '<div class="range-field" onclick="openNotePicker(' + i + ', \'end\', \'right\', event)">' + (slot.end || "End") + '</div>';
   html += '</div>';
 
+  html += '<div class="reverse-row">';
+  html += '<span class="reverse-label">Reverse at end</span>';
+  html += '<button type="button" class="toggle-switch' + (slot.reverseAtEnd ? ' on' : '') + '" onclick="event.stopPropagation(); toggleReverseAtEnd(' + i + ')" aria-label="Reverse at end" aria-pressed="' + (slot.reverseAtEnd ? 'true' : 'false') + '"><span class="knob"></span></button>';
+  html += '</div>';
+
   return html;
+}
+
+function toggleReverseAtEnd(i) {
+  state.slots[i].reverseAtEnd = !state.slots[i].reverseAtEnd;
+  saveState();
+  renderAll();
 }
 
 function playIconSVG() {
