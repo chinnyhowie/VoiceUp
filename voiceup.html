@@ -662,7 +662,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.13</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.14</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -922,6 +922,7 @@ let playbackToken = 0; // increment to cancel any running playback
 let highlightTimeouts = [];
 let activeSlotIndex = null; // which slot is currently playing, or null
 let activeAudioSources = []; // AudioBufferSourceNodes currently scheduled/playing, so we can force-stop them
+let playbackRun = null; // mutable state for the step-by-step scheduler; see scheduleRunStep
 
 function clearHighlights() {
   highlightTimeouts.forEach(t => clearTimeout(t));
@@ -938,6 +939,10 @@ function stopPlayback() {
     try { src.stop(0); } catch (e) { /* already stopped or ended, ignore */ }
   });
   activeAudioSources = [];
+  if (playbackRun && playbackRun.nextStepTimeout !== null) {
+    clearTimeout(playbackRun.nextStepTimeout);
+  }
+  playbackRun = null;
   document.getElementById("now-playing").innerHTML = "";
   clearPositionIndicator();
   activeSlotIndex = null;
@@ -1075,9 +1080,6 @@ async function playSlot(slotIndex) {
   renderAll();
 
   const ctx = getCtx();
-  const tempo = state.tempo;
-  const noteDur = 60 / tempo / 2;   // eighth note (arpeggio notes)
-  const chordDur = 60 / tempo;      // quarter note (chord)
   const semis = degreesToSemitones(pattern.degrees);
 
   // The stated range bounds EVERY note the pattern touches, not just where each
@@ -1097,9 +1099,9 @@ async function playSlot(slotIndex) {
     return;
   }
 
-  // Pre-decode every distinct sample this run will need, so no audio scheduling
-  // is ever delayed by an in-flight decode - this is what keeps the key
-  // highlights and the actual sound in sync.
+  // Pre-decode every distinct sample this run will ever need (across both the
+  // outbound and, if reverse-at-end is on, the return leg), so no audio
+  // scheduling is ever delayed by an in-flight decode.
   const neededMidis = new Set();
   for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) {
     [0,4,7].forEach(iv => neededMidis.add(root + iv)); // chord tones
@@ -1111,73 +1113,6 @@ async function playSlot(slotIndex) {
 
   // bail out if stopped while we were loading
   if (myToken !== playbackToken) return;
-
-  let t = ctx.currentTime + 0.15;
-
-  function scheduleStep(rootMidi, isLastStep, stepNumber, totalSteps, stepDescending) {
-    const chordTones = [0,4,7].map(iv => rootMidi + iv);
-    const arpMidis = semis.map(iv => rootMidi + iv);
-    const lastMidi = rootMidi + semis[semis.length - 1];
-    const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
-    const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
-    const stepStartTime = t;
-    const arpeggioExtremeMidi = stepDescending ? Math.min(...arpMidis) : Math.max(...arpMidis);
-    const arpeggioExtremeLabel = stepDescending ? "lowest" : "highest";
-
-    // chord: quarter note, rings fully, no added silence before or after.
-    // All three chord tones show green together - no red during the chord.
-    chordTones.forEach(m => scheduleNotePlayback(m, t, chordDur, myToken));
-    const chordName = midiToSampleName(rootMidi);
-    const chordDelay = (t - ctx.currentTime) * 1000;
-    highlightTimeouts.push(setTimeout(() => {
-      if (myToken !== playbackToken) return;
-      updateNowPlaying(chordName + " chord");
-      updatePositionIndicator(stepDescending, midiToName(arpeggioExtremeMidi), arpeggioExtremeLabel, stepNumber, totalSteps, lowMidi, highMidi);
-    }, Math.max(0, chordDelay)));
-    chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
-    t += chordDur;
-
-    // arpeggio phase starts here - mark the whole arpeggio's note-shape in red
-    // for the duration of the arpeggio only (not the chord), with the single
-    // currently-sounding note popping green on top of that red backdrop
-    const arpPhaseStartTime = t;
-
-    // arpeggio: eighth notes, immediately after chord
-    semis.forEach(iv => {
-      const noteMidi = rootMidi + iv;
-      scheduleNotePlayback(noteMidi, t, noteDur, myToken);
-      const noteName = midiToSampleName(noteMidi);
-      const noteDelay = (t - ctx.currentTime) * 1000;
-      highlightTimeouts.push(setTimeout(() => {
-        if (myToken !== playbackToken) return;
-        updateNowPlaying(noteName);
-      }, Math.max(0, noteDelay)));
-      highlightKeyAt(noteMidi, noteDelay, noteDur * 1000);
-      t += noteDur;
-    });
-
-    // repeat the last arpeggio note once - EXCEPT on the very last step of the
-    // whole run, where nothing follows it and the repeat is unnecessary
-    if (!isLastStep) {
-      scheduleNotePlayback(lastMidi, t, noteDur, myToken);
-      const lastDelay = (t - ctx.currentTime) * 1000;
-      highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
-      t += noteDur;
-    }
-
-    // red arpeggio-shape spans only the arpeggio phase (plus its repeated note),
-    // never the chord phase
-    const arpPhaseDelay = (arpPhaseStartTime - ctx.currentTime) * 1000;
-    const arpPhaseDurMs = (t - arpPhaseStartTime) * 1000;
-    markPatternAt(arpShapeMidis, arpPhaseDelay, arpPhaseDurMs);
-
-    // scroll the piano once per step so this step's note-span is centred,
-    // holding steady through the whole chord+arpeggio rather than chasing each note
-    const stepMinMidi = Math.min(...allStepMidis);
-    const stepMaxMidi = Math.max(...allStepMidis);
-    const centerMidi = Math.round((stepMinMidi + stepMaxMidi) / 2);
-    scrollPianoToCenter(centerMidi, chordDelay);
-  }
 
   const oneWaySequence = [];
   if (descending) {
@@ -1196,17 +1131,174 @@ async function playSlot(slotIndex) {
     rootSequence = oneWaySequence.concat(returnLeg);
   }
 
-  rootSequence.forEach((root, idx) => {
-    const onReturnLeg = idx >= oneWaySequence.length;
-    const stepDescending = onReturnLeg ? !descending : descending;
-    scheduleStep(root, idx === rootSequence.length - 1, idx + 1, rootSequence.length, stepDescending);
+  // ---- Step-by-step scheduler ----
+  // Rather than computing every step's exact timestamp up front (which would
+  // lock in whatever tempo was set at the moment play was pressed, and give
+  // no way to jump to a different step mid-run), only ONE step is scheduled
+  // at a time. Each step, once its audio actually starts, sets a single
+  // timer for "when this step's audio+visuals should end" and that timer is
+  // what schedules the next step - re-reading state.tempo fresh each time.
+  // This is what makes live tempo changes and click-to-skip possible.
+  //
+  // playbackRun holds the mutable state for this run so other functions
+  // (the tempo slider, a piano tap) can redirect it without reaching into
+  // playSlot's closure.
+  playbackRun = {
+    token: myToken,
+    slot: slot,
+    descending: descending,
+    lowMidi: lowMidi,
+    highMidi: highMidi,
+    semis: semis,
+    oneWaySequence: oneWaySequence,
+    rootSequence: rootSequence,
+    ctx: ctx,
+    currentIndex: 0,
+    nextStepTimeout: null
+  };
+
+  scheduleRunStep(0);
+}
+
+// Schedules a single step (chord + arpeggio + repeat note) of the current
+// playbackRun, starting immediately (at ctx.currentTime + a small lookahead),
+// then arms a timer for the next step once this one's audio duration (at
+// whatever tempo is current right now) has elapsed. Re-entrant: calling this
+// again for a different index (e.g. from a piano tap) cancels whatever timer
+// was pending and starts fresh from there.
+function scheduleRunStep(index) {
+  const run = playbackRun;
+  if (!run || run.token !== playbackToken) return;
+  if (run.nextStepTimeout !== null) {
+    clearTimeout(run.nextStepTimeout);
+    run.nextStepTimeout = null;
+  }
+
+  if (index >= run.rootSequence.length) {
+    stopPlayback();
+    return;
+  }
+
+  run.currentIndex = index;
+
+  const myToken = run.token;
+  const ctx = run.ctx;
+  const ctxNow = ctx.currentTime;
+
+  // tempo (and therefore note durations) is read fresh for every step, so a
+  // mid-run change to state.tempo takes effect starting with the very next
+  // step scheduled after the change.
+  const tempo = state.tempo;
+  const noteDur = 60 / tempo / 2;   // eighth note (arpeggio notes)
+  const chordDur = 60 / tempo;      // quarter note (chord)
+
+  const rootMidi = run.rootSequence[index];
+  const isLastStep = index === run.rootSequence.length - 1;
+  const onReturnLeg = index >= run.oneWaySequence.length;
+  const stepDescending = onReturnLeg ? !run.descending : run.descending;
+  const stepNumber = index + 1;
+  const totalSteps = run.rootSequence.length;
+
+  const semis = run.semis;
+  const chordTones = [0,4,7].map(iv => rootMidi + iv);
+  const arpMidis = semis.map(iv => rootMidi + iv);
+  const lastMidi = rootMidi + semis[semis.length - 1];
+  const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
+  const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
+  const arpeggioExtremeMidi = stepDescending ? Math.min(...arpMidis) : Math.max(...arpMidis);
+  const arpeggioExtremeLabel = stepDescending ? "lowest" : "highest";
+
+  let t = ctxNow + 0.05; // small lookahead so this step's own audio isn't clipped
+
+  // chord: quarter note, rings fully, no added silence before or after.
+  // All three chord tones show green together - no red during the chord.
+  chordTones.forEach(m => scheduleNotePlayback(m, t, chordDur, myToken));
+  const chordName = midiToSampleName(rootMidi);
+  updateNowPlaying(chordName + " chord");
+  updatePositionIndicator(stepDescending, midiToName(arpeggioExtremeMidi), arpeggioExtremeLabel, stepNumber, totalSteps, run.lowMidi, run.highMidi);
+  chordTones.forEach(m => highlightKeyAt(m, 0, chordDur * 1000));
+  t += chordDur;
+
+  // arpeggio phase starts here - mark the whole arpeggio's note-shape in red
+  // for the duration of the arpeggio only (not the chord), with the single
+  // currently-sounding note popping green on top of that red backdrop
+  const arpPhaseStartTime = t;
+
+  // arpeggio: eighth notes, immediately after chord
+  semis.forEach(iv => {
+    const noteMidi = rootMidi + iv;
+    scheduleNotePlayback(noteMidi, t, noteDur, myToken);
+    const noteName = midiToSampleName(noteMidi);
+    const noteDelay = (t - ctxNow) * 1000;
+    highlightTimeouts.push(setTimeout(() => {
+      if (myToken !== playbackToken) return;
+      updateNowPlaying(noteName);
+    }, Math.max(0, noteDelay)));
+    highlightKeyAt(noteMidi, noteDelay, noteDur * 1000);
+    t += noteDur;
   });
 
-  const totalMs = (t - ctx.currentTime) * 1000;
-  highlightTimeouts.push(setTimeout(() => {
+  // repeat the last arpeggio note once - EXCEPT on the very last step of the
+  // whole run, where nothing follows it and the repeat is unnecessary
+  if (!isLastStep) {
+    scheduleNotePlayback(lastMidi, t, noteDur, myToken);
+    const lastDelay = (t - ctxNow) * 1000;
+    highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
+    t += noteDur;
+  }
+
+  // red arpeggio-shape spans only the arpeggio phase (plus its repeated note),
+  // never the chord phase
+  const arpPhaseDelay = (arpPhaseStartTime - ctxNow) * 1000;
+  const arpPhaseDurMs = (t - arpPhaseStartTime) * 1000;
+  markPatternAt(arpShapeMidis, arpPhaseDelay, arpPhaseDurMs);
+
+  // scroll the piano once per step so this step's note-span is centred,
+  // holding steady through the whole chord+arpeggio rather than chasing each note
+  const stepMinMidi = Math.min(...allStepMidis);
+  const stepMaxMidi = Math.max(...allStepMidis);
+  const centerMidi = Math.round((stepMinMidi + stepMaxMidi) / 2);
+  scrollPianoToCenter(centerMidi, 0);
+
+  const stepTotalMs = (t - ctxNow) * 1000;
+  run.nextStepTimeout = setTimeout(() => {
     if (myToken !== playbackToken) return;
-    stopPlayback();
-  }, totalMs + 100));
+    scheduleRunStep(index + 1);
+  }, stepTotalMs);
+}
+
+// Jumps the currently playing run to the step whose root is closest to
+// targetMidi, keeping the run's original direction (ascending stays
+// ascending, descending stays descending). For a reverse-at-end slot, the
+// same root can appear on both the outbound and return leg, so the search
+// is restricted to whichever leg the run is currently on - otherwise a tap
+// on the return leg could silently jump back onto the outbound leg and
+// reverse the direction of travel, which is exactly what "preserve
+// direction" rules out.
+function skipRunToNote(targetMidi) {
+  const run = playbackRun;
+  if (!run || run.token !== playbackToken) return;
+
+  const onReturnLeg = run.currentIndex >= run.oneWaySequence.length;
+  const legStart = onReturnLeg ? run.oneWaySequence.length : 0;
+  const legEnd = onReturnLeg ? run.rootSequence.length : run.oneWaySequence.length;
+
+  let bestIndex = legStart;
+  let bestDist = Infinity;
+  for (let idx = legStart; idx < legEnd; idx++) {
+    const dist = Math.abs(run.rootSequence[idx] - targetMidi);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestIndex = idx;
+    }
+  }
+
+  clearHighlights();
+  activeAudioSources.forEach(src => {
+    try { src.stop(0); } catch (e) {}
+  });
+  activeAudioSources = [];
+  scheduleRunStep(bestIndex);
 }
 
 // ---------- Rendering ----------
@@ -1542,13 +1634,20 @@ window.addEventListener("resize", () => renderPiano());
 
 function onKeyTap(midi) {
   const name = midiToName(midi);
-  playNoteOnce(midi);
   if (rangeTarget) {
     state.slots[rangeTarget.slotIndex][rangeTarget.which] = name;
     saveState();
     closeAllOverlays();
     renderAll();
+    return;
   }
+  if (activeSlotIndex !== null && playbackRun) {
+    // a slot is playing - jump it to this note instead of previewing the
+    // note in isolation, since the skip itself will produce audible sound
+    skipRunToNote(midi);
+    return;
+  }
+  playNoteOnce(midi);
 }
 
 // play a single note once, for audible feedback when tapping the piano -
