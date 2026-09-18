@@ -22,6 +22,7 @@
     --key-white-border: #ccccc7;
     --key-black: #2a2a28;
     --key-active: #1f6b3f;
+    --key-active-border: #0f3d23;
     --key-in-pattern: #d9776b;
     --key-active-outline: #ffffff;
     --key-in-pattern-outline: #7a2e24;
@@ -44,6 +45,7 @@
     --key-white-border: #444a50;
     --key-black: #0d0f11;
     --key-active: #6fcf97;
+    --key-active-border: #1f6b3f;
     --key-in-pattern: #b3453a;
     --key-active-outline: #0d0f11;
     --key-in-pattern-outline: #f2c4bd;
@@ -66,6 +68,7 @@
       --key-white-border: #444a50;
       --key-black: #0d0f11;
       --key-active: #6fcf97;
+      --key-active-border: #1f6b3f;
       --key-in-pattern: #b3453a;
       --key-active-outline: #0d0f11;
       --key-in-pattern-outline: #f2c4bd;
@@ -518,15 +521,21 @@
 
   .pos-note {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 1px;
     flex-shrink: 0;
   }
 
   .pos-note-val {
     font-size: 1.25em;
     font-weight: 600;
+  }
+
+  .pos-note-label {
+    font-size: 0.7em;
+    color: var(--text-muted);
   }
 
   .pos-step {
@@ -555,8 +564,8 @@
   .pos-block {
     height: 6px;
     border-radius: 2px;
-    background: var(--card);
-    border: 0.5px solid var(--card-border);
+    background: var(--bg);
+    border: 1px solid var(--card-border);
   }
 
   .pos-block.filled {
@@ -605,7 +614,7 @@
 
   .white-key.active {
     background: var(--key-active) !important;
-    box-shadow: inset 0 0 0 2px var(--key-active-outline);
+    box-shadow: inset 0 0 0 2px var(--key-active-border);
   }
 
   .white-key .label {
@@ -640,7 +649,7 @@
 
   .black-key.active {
     background: var(--key-active) !important;
-    box-shadow: inset 0 0 0 2px var(--key-active-outline);
+    box-shadow: inset 0 0 0 2px var(--key-active-border);
   }
 
   .piano-hint {
@@ -653,7 +662,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.12</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.13</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -989,10 +998,11 @@ function updateNowPlaying(noteName) {
   // playing clearly, so the note-name text display has been removed.
 }
 
-// Updates the position indicator bar (direction, arpeggio-high note, step
-// count, and the block progress bar) - called once per step, at the same
-// moment the chord for that step starts sounding.
-function updatePositionIndicator(descending, arpHighName, stepNumber, totalSteps, lowMidi, highMidi) {
+// Updates the position indicator bar (direction, the arpeggio's extreme note
+// for this step with a highest/lowest label, step count, and the block
+// progress bar) - called once per step, at the same moment the chord for
+// that step starts sounding.
+function updatePositionIndicator(descending, extremeNoteName, extremeLabel, stepNumber, totalSteps, lowMidi, highMidi) {
   const el = document.getElementById("position-indicator");
   if (!el) return;
 
@@ -1009,7 +1019,7 @@ function updatePositionIndicator(descending, arpHighName, stepNumber, totalSteps
   el.innerHTML =
     '<div class="pos-top-row">' +
       '<div class="pos-direction">' + dirIcon + '<span>' + dirLabel + '</span></div>' +
-      '<div class="pos-note"><span class="pos-note-val">' + arpHighName + '</span></div>' +
+      '<div class="pos-note"><span class="pos-note-val">' + extremeNoteName + '</span><span class="pos-note-label">' + extremeLabel + '</span></div>' +
       '<div class="pos-step"><div class="pos-step-label">step</div><div class="pos-step-val">' + stepNumber + ' / ' + totalSteps + '</div></div>' +
     '</div>' +
     '<div class="pos-blocks">' + blocks + '</div>' +
@@ -1111,7 +1121,8 @@ async function playSlot(slotIndex) {
     const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
     const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
     const stepStartTime = t;
-    const arpeggioHighMidi = Math.max(...arpMidis);
+    const arpeggioExtremeMidi = stepDescending ? Math.min(...arpMidis) : Math.max(...arpMidis);
+    const arpeggioExtremeLabel = stepDescending ? "lowest" : "highest";
 
     // chord: quarter note, rings fully, no added silence before or after.
     // All three chord tones show green together - no red during the chord.
@@ -1121,7 +1132,7 @@ async function playSlot(slotIndex) {
     highlightTimeouts.push(setTimeout(() => {
       if (myToken !== playbackToken) return;
       updateNowPlaying(chordName + " chord");
-      updatePositionIndicator(stepDescending, midiToName(arpeggioHighMidi), stepNumber, totalSteps, lowMidi, highMidi);
+      updatePositionIndicator(stepDescending, midiToName(arpeggioExtremeMidi), arpeggioExtremeLabel, stepNumber, totalSteps, lowMidi, highMidi);
     }, Math.max(0, chordDelay)));
     chordTones.forEach(m => highlightKeyAt(m, chordDelay, chordDur * 1000));
     t += chordDur;
