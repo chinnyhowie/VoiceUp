@@ -471,6 +471,53 @@
     margin-bottom: 6px;
   }
 
+  .stepper-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    background: var(--bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .stepper-btn {
+    width: 44px;
+    flex-shrink: 0;
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: inherit;
+    font-size: 1.5em;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .stepper-btn:active {
+    background: var(--card-border);
+  }
+
+  .stepper-readout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .stepper-readout-val {
+    font-size: 1.2em;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .stepper-readout-label {
+    font-size: 0.7em;
+    color: var(--text-muted);
+  }
+
   input[type="range"] {
     width: 100%;
   }
@@ -662,16 +709,20 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.14</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.15</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
   <div class="tempo-header">
     <span>Tempo</span>
-    <span id="tempo-val">90 bpm</span>
   </div>
-  <div style="display: flex; gap: 8px; align-items: center;">
-    <input type="range" id="tempo" min="40" max="160" value="90" step="1" style="flex: 1;">
+  <div style="display: flex; gap: 8px; align-items: stretch;">
+    <button class="stepper-btn" id="tempo-minus" aria-label="Decrease tempo">&minus;</button>
+    <div class="stepper-readout">
+      <div class="stepper-readout-val" id="tempo-val-num">90</div>
+      <div class="stepper-readout-label">bpm</div>
+    </div>
+    <button class="stepper-btn" id="tempo-plus" aria-label="Increase tempo">&plus;</button>
     <button class="tap-btn" id="tap-btn" onclick="onTapTempo()">Tap</button>
   </div>
 </div>
@@ -705,11 +756,15 @@
   </div>
 
   <div class="settings-section">
-    <div class="settings-row-between">
-      <span>Font size</span>
-      <span id="font-size-val">18px</span>
+    <div class="settings-section-label">Font size</div>
+    <div class="stepper-row">
+      <button class="stepper-btn" id="font-size-minus" aria-label="Decrease font size">&minus;</button>
+      <div class="stepper-readout">
+        <div class="stepper-readout-val" id="font-size-val-num">18</div>
+        <div class="stepper-readout-label">px</div>
+      </div>
+      <button class="stepper-btn" id="font-size-plus" aria-label="Increase font size">&plus;</button>
     </div>
-    <input type="range" id="font-size-slider" min="12" max="20" step="1" value="18">
   </div>
 
   <div class="settings-section">
@@ -722,6 +777,17 @@
       <button data-octave-choice="2" onclick="setPianoOctaves(2)">2</button>
     </div>
     <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 6px;">Octaves visible at once while a slot plays</div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Number of slots</div>
+    <div class="stepper-row">
+      <button class="stepper-btn" id="slots-minus" aria-label="Decrease number of slots">&minus;</button>
+      <div class="stepper-readout">
+        <div class="stepper-readout-val" id="slots-val-num">5</div>
+      </div>
+      <button class="stepper-btn" id="slots-plus" aria-label="Increase number of slots">&plus;</button>
+    </div>
   </div>
 </div>
 
@@ -1396,8 +1462,7 @@ function renderAll() {
   });
   portrait.innerHTML = pHtml;
 
-  document.getElementById("tempo").value = state.tempo;
-  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
+  document.getElementById("tempo-val-num").textContent = state.tempo;
 
   renderPiano();
 }
@@ -1524,11 +1589,11 @@ function updateSettingsUI() {
   document.querySelectorAll("#theme-btn-group button").forEach(b => {
     b.classList.toggle("selected", b.dataset.themeChoice === state.theme);
   });
-  document.getElementById("font-size-slider").value = state.fontSize;
-  document.getElementById("font-size-val").textContent = state.fontSize + "px";
+  document.getElementById("font-size-val-num").textContent = state.fontSize;
   document.querySelectorAll("#octave-btn-group button").forEach(b => {
     b.classList.toggle("selected", parseFloat(b.dataset.octaveChoice) === state.pianoOctaves);
   });
+  document.getElementById("slots-val-num").textContent = state.slots.length;
 }
 
 function setTheme(theme) {
@@ -1545,19 +1610,85 @@ function setPianoOctaves(oct) {
   renderPiano();
 }
 
-document.getElementById("font-size-slider").addEventListener("input", function() {
-  state.fontSize = parseInt(this.value, 10);
-  document.documentElement.style.setProperty("--app-font-size", state.fontSize + "px");
-  document.getElementById("font-size-val").textContent = state.fontSize + "px";
+function setFontSize(px) {
+  px = Math.max(12, Math.min(20, px));
+  state.fontSize = px;
+  document.documentElement.style.setProperty("--app-font-size", px + "px");
+  document.getElementById("font-size-val-num").textContent = px;
   saveState();
-});
+}
+
+wireStepperButton(document.getElementById("font-size-minus"), -1, -1, (amount) => setFontSize(state.fontSize + amount));
+wireStepperButton(document.getElementById("font-size-plus"), 1, 1, (amount) => setFontSize(state.fontSize + amount));
+
+function setSlotCount(count) {
+  count = Math.max(1, Math.min(20, count));
+  const current = state.slots.length;
+  if (count === current) return;
+
+  if (count < current) {
+    // if the slot that would be removed is the one currently playing, stop
+    // playback first so nothing is left pointing at a slot that no longer exists
+    if (activeSlotIndex !== null && activeSlotIndex >= count) {
+      stopPlayback();
+    }
+    state.slots = state.slots.slice(0, count);
+  } else {
+    for (let i = current; i < count; i++) {
+      state.slots.push({ patternId: null, start: null, end: null, reverseAtEnd: false });
+    }
+  }
+
+  if (state.expandedSlot >= count) state.expandedSlot = -1;
+
+  saveState();
+  updateSettingsUI();
+  renderAll();
+}
+
+wireStepperButton(document.getElementById("slots-minus"), -1, -1, (amount) => setSlotCount(state.slots.length + amount));
+wireStepperButton(document.getElementById("slots-plus"), 1, 1, (amount) => setSlotCount(state.slots.length + amount));
 
 // ---------- Tempo ----------
-document.getElementById("tempo").addEventListener("input", function() {
-  state.tempo = parseInt(this.value, 10);
-  document.getElementById("tempo-val").textContent = state.tempo + " bpm";
+function setTempo(bpm) {
+  bpm = Math.max(40, Math.min(160, bpm));
+  state.tempo = bpm;
+  document.getElementById("tempo-val-num").textContent = bpm;
   saveState();
-});
+}
+
+// Shared press-and-hold helper: fires `step(1)` once immediately on tap, then
+// after a short delay repeats `step(direction)` every interval while held,
+// accelerating to the "held" increment after the first couple of repeats.
+// Used by both the tempo and font-size steppers so tap-vs-hold behaves the
+// same way in both places.
+function wireStepperButton(btnEl, tapAmount, holdAmount, onStep) {
+  let holdTimeout = null;
+  let holdInterval = null;
+  let firedFromHold = false;
+
+  function stop() {
+    if (holdTimeout) { clearTimeout(holdTimeout); holdTimeout = null; }
+    if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
+  }
+
+  btnEl.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    firedFromHold = false;
+    onStep(tapAmount);
+    holdTimeout = setTimeout(() => {
+      firedFromHold = true;
+      holdInterval = setInterval(() => onStep(holdAmount), 150);
+    }, 450);
+  });
+
+  ["pointerup", "pointerleave", "pointercancel"].forEach(evt => {
+    btnEl.addEventListener(evt, stop);
+  });
+}
+
+wireStepperButton(document.getElementById("tempo-minus"), -1, -10, (amount) => setTempo(state.tempo + amount));
+wireStepperButton(document.getElementById("tempo-plus"), 1, 10, (amount) => setTempo(state.tempo + amount));
 
 // ---------- Piano ----------
 // how many white keys make up the visible window, based on the chosen octave count,
@@ -1683,8 +1814,7 @@ function onTapTempo() {
     let bpm = Math.round(60000 / avgMs);
     bpm = Math.max(40, Math.min(160, bpm));
     state.tempo = bpm;
-    document.getElementById("tempo").value = bpm;
-    document.getElementById("tempo-val").textContent = bpm + " bpm";
+    document.getElementById("tempo-val-num").textContent = bpm;
     saveState();
   }
   if (tapTimes.length > 8) tapTimes = tapTimes.slice(-8);
