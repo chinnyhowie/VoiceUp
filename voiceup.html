@@ -264,6 +264,111 @@
     width: 100%;
   }
 
+  .colour-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 0.5px solid var(--card-border);
+  }
+
+  .colour-row:last-child {
+    border-bottom: 0.5px solid var(--card-border);
+  }
+
+  .colour-row-label {
+    flex: 1;
+    font-size: 0.92em;
+  }
+
+  .passaggio-note-select {
+    width: 40px;
+    flex-shrink: 0;
+    font-size: 0.73em;
+    padding: 5px 2px;
+    text-align: center;
+    text-align-last: center;
+  }
+
+  .colour-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 0.5px solid var(--card-border);
+  }
+
+  .colour-swatch.no-colour {
+    background: var(--card);
+    border: 1.5px dashed var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    color: var(--text-muted);
+  }
+
+  .colour-picker-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .colour-picker-overlay.show {
+    display: flex;
+  }
+
+  .colour-picker-panel {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    width: min(260px, 84vw);
+  }
+
+  .colour-picker-title {
+    font-size: 0.95em;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .colour-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .colour-picker-swatch {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 0.5px solid var(--card-border);
+    cursor: pointer;
+  }
+
+  .colour-picker-swatch.selected {
+    border: 2px solid var(--text);
+  }
+
+  .colour-picker-none-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 0;
+    border: 1.5px dashed var(--text-muted);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    cursor: pointer;
+  }
+
   .slot {
     background: var(--card);
     border: 0.5px solid var(--card-border);
@@ -702,16 +807,6 @@
     position: relative;
   }
 
-  .white-key.in-pattern {
-    background: var(--key-in-pattern) !important;
-    box-shadow: inset 0 0 0 2px var(--key-in-pattern-outline);
-  }
-
-  .white-key.active {
-    background: var(--key-active) !important;
-    box-shadow: inset 0 0 0 2px var(--key-active-border);
-  }
-
   .white-key .label {
     position: absolute;
     bottom: 3px;
@@ -723,8 +818,9 @@
     pointer-events: none;
   }
 
-  .white-key.active .label {
-    color: var(--key-active-outline);
+  .white-key.coloured .label {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   }
 
   .black-key {
@@ -737,16 +833,6 @@
     z-index: 2;
   }
 
-  .black-key.in-pattern {
-    background: var(--key-in-pattern) !important;
-    box-shadow: inset 0 0 0 2px var(--key-in-pattern-outline);
-  }
-
-  .black-key.active {
-    background: var(--key-active) !important;
-    box-shadow: inset 0 0 0 2px var(--key-active-border);
-  }
-
   .piano-hint {
     font-size: 0.92em;
     color: var(--text-muted);
@@ -757,7 +843,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.18</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.19</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -834,7 +920,14 @@
       <button class="stepper-btn" id="slots-plus" aria-label="Increase number of slots">&plus;</button>
     </div>
   </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Colours</div>
+    <div id="colours-list"></div>
+  </div>
 </div>
+
+<div class="colour-picker-overlay" id="colour-picker-overlay"></div>
 
 <div class="note-picker-overlay" id="note-picker-overlay"></div>
 
@@ -931,7 +1024,16 @@ let state = loadState() || {
   expandedSlot: 0,
   theme: "auto",
   fontSize: 18,
-  pianoOctaves: 1.5
+  pianoOctaves: 1.5,
+  colours: {
+    chord: "#e08a2b",
+    playing: "#d9483f"
+  },
+  passaggios: {
+    primo: { note: "E4", colour: "#3f9e52" },
+    secondo: { note: "G4", colour: "#2b7fe0" },
+    terzo: { note: "Bb4", colour: "#8a5fd6" }
+  }
 };
 
 // migrate any old-format saved state (low/high fields) to start/end
@@ -943,6 +1045,16 @@ if (state.slots) {
   });
 }
 if (state.theme === undefined) state.theme = "auto";
+if (!state.colours) {
+  state.colours = { chord: "#e08a2b", playing: "#d9483f" };
+}
+if (!state.passaggios) {
+  state.passaggios = {
+    primo: { note: "E4", colour: "#3f9e52" },
+    secondo: { note: "G4", colour: "#2b7fe0" },
+    terzo: { note: "Bb4", colour: "#8a5fd6" }
+  };
+}
 if (state.fontSize === undefined) state.fontSize = 18;
 if (state.pianoOctaves === undefined) state.pianoOctaves = 1.5;
 
@@ -1034,12 +1146,15 @@ let highlightTimeouts = [];
 let activeSlotIndex = null; // which slot is currently playing, or null
 let activeAudioSources = []; // AudioBufferSourceNodes currently scheduled/playing, so we can force-stop them
 let playbackRun = null; // mutable state for the step-by-step scheduler; see scheduleRunStep
+let activeMidis = new Set(); // notes currently sounding right now (highest colour priority)
+let inPatternMidis = new Set(); // notes in the current step's arpeggio shape (chord colour, lowest priority)
 
 function clearHighlights() {
   highlightTimeouts.forEach(t => clearTimeout(t));
   highlightTimeouts = [];
-  document.querySelectorAll(".white-key.active, .black-key.active").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".white-key.in-pattern, .black-key.in-pattern").forEach(el => el.classList.remove("in-pattern"));
+  activeMidis.clear();
+  inPatternMidis.clear();
+  repaintAllKeys();
 }
 
 function stopPlayback() {
@@ -1060,14 +1175,69 @@ function stopPlayback() {
   renderAll();
 }
 
+// Looks up whether a given midi note matches one of the three passaggios (by
+// note name, so enharmonic spelling doesn't matter), returning its colour key
+// object, or null if it's not a passaggio note or that passaggio has no
+// colour set ("no colour" opts a passaggio out entirely).
+function getPassaggioForMidi(midi) {
+  const name = midiToName(midi);
+  for (let i = 0; i < PASSAGGIO_KEYS.length; i++) {
+    const p = state.passaggios[PASSAGGIO_KEYS[i]];
+    if (p && p.note === name && p.colour) return p;
+  }
+  return null;
+}
+
+// The single source of truth for what colour a key should show right now,
+// applied at render time and every time a key's playing/in-pattern status
+// changes. Priority: currently sounding > passaggio (if it has a colour set)
+// > in the current chord/arpeggio shape > plain.
+function applyKeyColour(midi) {
+  const el = document.querySelector('.key[data-midi="' + midi + '"]');
+  if (!el) return;
+
+  if (activeMidis.has(midi)) {
+    el.style.background = state.colours.playing;
+    el.style.boxShadow = "inset 0 0 0 2px " + state.colours.playing;
+    el.classList.add("coloured");
+    return;
+  }
+  const passaggio = getPassaggioForMidi(midi);
+  if (passaggio) {
+    el.style.background = passaggio.colour;
+    el.style.boxShadow = "inset 0 0 0 2px " + passaggio.colour;
+    el.classList.add("coloured");
+    return;
+  }
+  if (inPatternMidis.has(midi)) {
+    el.style.background = state.colours.chord;
+    el.style.boxShadow = "inset 0 0 0 2px " + state.colours.chord;
+    el.classList.add("coloured");
+    return;
+  }
+  el.style.background = "";
+  el.style.boxShadow = "";
+  el.classList.remove("coloured");
+}
+
+// Repaints every key currently on screen - used after the piano itself is
+// rebuilt (renderPiano) and whenever colours/passaggios settings change,
+// so passaggio colours show up immediately even with nothing playing.
+function repaintAllKeys() {
+  document.querySelectorAll(".key").forEach(el => {
+    const midi = parseInt(el.dataset.midi, 10);
+    applyKeyColour(midi);
+  });
+}
+
 function highlightKeyAt(midi, delayMs, durMs) {
   const t1 = setTimeout(() => {
-    const el = document.querySelector('.key[data-midi="' + midi + '"]');
-    if (el) el.classList.add("active");
+    activeMidis.add(midi);
+    applyKeyColour(midi);
   }, Math.max(0, delayMs));
   const t2 = setTimeout(() => {
-    const el = document.querySelector('.key[data-midi="' + midi + '"]');
-    if (el) el.classList.remove("active");
+    activeMidis.delete(midi);
+    applyKeyColour(midi);
   }, Math.max(0, delayMs) + durMs);
   highlightTimeouts.push(t1, t2);
 }
@@ -1091,19 +1261,21 @@ function scrollPianoToCenter(midi, delayMs) {
   highlightTimeouts.push(t1);
 }
 
-// mark/unmark a set of keys as "in the current step's pattern" (red), at a given
-// delay, for a given duration - shows the shape of the whole step ahead of time
+// mark/unmark a set of keys as "in the current step's pattern" (chord colour),
+// at a given delay, for a given duration - shows the shape of the whole step
+// ahead of time. Actual painted colour still goes through the priority
+// system (a passaggio note in the shape shows its own colour, not chord's).
 function markPatternAt(midis, delayMs, durMs) {
   const t1 = setTimeout(() => {
     midis.forEach(m => {
-      const el = document.querySelector('.key[data-midi="' + m + '"]');
-      if (el) el.classList.add("in-pattern");
+      inPatternMidis.add(m);
+      applyKeyColour(m);
     });
   }, Math.max(0, delayMs));
   const t2 = setTimeout(() => {
     midis.forEach(m => {
-      const el = document.querySelector('.key[data-midi="' + m + '"]');
-      if (el) el.classList.remove("in-pattern");
+      inPatternMidis.delete(m);
+      applyKeyColour(m);
     });
   }, Math.max(0, delayMs) + durMs);
   highlightTimeouts.push(t1, t2);
@@ -1635,6 +1807,7 @@ function openSettings() {
 function closeAllOverlays() {
   document.getElementById("settings-overlay").classList.remove("show");
   document.getElementById("note-picker-overlay").classList.remove("show");
+  document.getElementById("colour-picker-overlay").classList.remove("show");
   document.getElementById("overlay-backdrop").classList.remove("show");
   if (notePickerOutsideClickHandler) {
     document.removeEventListener("click", notePickerOutsideClickHandler, true);
@@ -1652,7 +1825,103 @@ function updateSettingsUI() {
     b.classList.toggle("selected", parseFloat(b.dataset.octaveChoice) === state.pianoOctaves);
   });
   document.getElementById("slots-val-num").textContent = state.slots.length;
+  renderColoursList();
 }
+
+// ---------- Colours & passaggios ----------
+const PASSAGGIO_KEYS = ["primo", "secondo", "terzo"];
+const PASSAGGIO_LABELS = { primo: "Primo", secondo: "Secondo", terzo: "Terzo" };
+const COLOUR_PRESETS = ["#3f9e52", "#2b7fe0", "#8a5fd6", "#d9483f", "#e08a2b", "#d64ea0", "#2bb5b0", "#f2d51c", "#6b6b66", "#1a1a18"];
+
+function passaggioNoteOptionsHTML(currentName) {
+  let html = "";
+  ALL_NOTES.forEach(n => {
+    html += '<option value="' + n.name + '"' + (n.name === currentName ? " selected" : "") + '>' + n.name + '</option>';
+  });
+  return html;
+}
+
+function renderColoursList() {
+  const el = document.getElementById("colours-list");
+  if (!el) return;
+
+  let html = "";
+  html += '<div class="colour-row">' +
+    '<span class="colour-row-label">Chord</span>' +
+    '<div class="colour-swatch" style="background:' + state.colours.chord + '" onclick="openColourPicker(\'chord\')"></div>' +
+    '</div>';
+  html += '<div class="colour-row">' +
+    '<span class="colour-row-label">Currently playing</span>' +
+    '<div class="colour-swatch" style="background:' + state.colours.playing + '" onclick="openColourPicker(\'playing\')"></div>' +
+    '</div>';
+
+  PASSAGGIO_KEYS.forEach(key => {
+    const p = state.passaggios[key];
+    const swatchHtml = p.colour
+      ? '<div class="colour-swatch" style="background:' + p.colour + '" onclick="openColourPicker(\'' + key + '\')"></div>'
+      : '<div class="colour-swatch no-colour" onclick="openColourPicker(\'' + key + '\')">&times;</div>';
+    html += '<div class="colour-row">' +
+      '<span class="colour-row-label">' + PASSAGGIO_LABELS[key] + '</span>' +
+      '<select class="passaggio-note-select" onchange="setPassaggioNote(\'' + key + '\', this.value)">' + passaggioNoteOptionsHTML(p.note) + '</select>' +
+      swatchHtml +
+      '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function setPassaggioNote(key, name) {
+  state.passaggios[key].note = name;
+  saveState();
+  repaintAllKeys();
+}
+
+let colourPickerTarget = null; // "chord" | "playing" | "primo" | "secondo" | "terzo"
+
+function openColourPicker(target) {
+  colourPickerTarget = target;
+  const isPassaggio = PASSAGGIO_KEYS.includes(target);
+  const current = isPassaggio ? state.passaggios[target].colour : state.colours[target];
+  const title = target === "chord" ? "Chord colour" : target === "playing" ? "Currently playing colour" : PASSAGGIO_LABELS[target] + " colour";
+
+  let grid = "";
+  COLOUR_PRESETS.forEach(c => {
+    grid += '<div class="colour-picker-swatch' + (c === current ? " selected" : "") + '" style="background:' + c + '" onclick="pickColour(\'' + c + '\')"></div>';
+  });
+
+  let html = '<div class="colour-picker-panel">' +
+    '<div class="colour-picker-title">' + title + '</div>' +
+    '<div class="colour-picker-grid">' + grid + '</div>';
+  if (isPassaggio) {
+    html += '<button class="colour-picker-none-btn" onclick="pickColour(null)">&times; No colour</button>';
+  }
+  html += '</div>';
+
+  const overlay = document.getElementById("colour-picker-overlay");
+  overlay.innerHTML = html;
+  overlay.classList.add("show");
+}
+
+function pickColour(colour) {
+  if (!colourPickerTarget) return;
+  if (colourPickerTarget === "chord" || colourPickerTarget === "playing") {
+    state.colours[colourPickerTarget] = colour;
+  } else {
+    state.passaggios[colourPickerTarget].colour = colour;
+  }
+  saveState();
+  document.getElementById("colour-picker-overlay").classList.remove("show");
+  colourPickerTarget = null;
+  renderColoursList();
+  repaintAllKeys();
+}
+
+document.getElementById("colour-picker-overlay").addEventListener("click", function(e) {
+  if (e.target === this) {
+    this.classList.remove("show");
+    colourPickerTarget = null;
+  }
+});
 
 function setTheme(theme) {
   state.theme = theme;
@@ -1817,6 +2086,7 @@ function renderPiano() {
   }
 
   piano.innerHTML = whiteHtml + blackHtml;
+  repaintAllKeys();
 }
 
 window.addEventListener("resize", () => renderPiano());
@@ -1892,6 +2162,9 @@ window.openSettings = openSettings;
 window.closeAllOverlays = closeAllOverlays;
 window.setTheme = setTheme;
 window.setPianoOctaves = setPianoOctaves;
+window.openColourPicker = openColourPicker;
+window.pickColour = pickColour;
+window.setPassaggioNote = setPassaggioNote;
 
 // Apply persisted theme and font size immediately on load
 document.documentElement.setAttribute("data-theme", state.theme);
