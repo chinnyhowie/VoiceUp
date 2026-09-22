@@ -282,10 +282,10 @@
   }
 
   .passaggio-note-select {
-    width: 40px;
+    width: 58px;
     flex-shrink: 0;
-    font-size: 0.73em;
-    padding: 5px 2px;
+    font-size: 0.85em;
+    padding: 5px 4px;
     text-align: center;
     text-align-last: center;
   }
@@ -843,7 +843,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.19</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.20</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1026,13 +1026,12 @@ let state = loadState() || {
   fontSize: 18,
   pianoOctaves: 1.5,
   colours: {
-    chord: "#e08a2b",
-    playing: "#d9483f"
+    chord: "orange"
   },
   passaggios: {
-    primo: { note: "E4", colour: "#3f9e52" },
-    secondo: { note: "G4", colour: "#2b7fe0" },
-    terzo: { note: "Bb4", colour: "#8a5fd6" }
+    primo: { note: "E4", colourId: "green" },
+    secondo: { note: "G4", colourId: "purple" },
+    custom: { note: "Bb4", colourId: null }
   }
 };
 
@@ -1046,15 +1045,54 @@ if (state.slots) {
 }
 if (state.theme === undefined) state.theme = "auto";
 if (!state.colours) {
-  state.colours = { chord: "#e08a2b", playing: "#d9483f" };
+  state.colours = { chord: "orange" };
 }
+// migrate the earlier hex-based chord colour, and any preset id that no
+// longer exists (the palette was trimmed from 10 presets down to 5) back to
+// orange, since Chord always needs a valid colour
+const VALID_PRESET_IDS = ["green", "blue", "purple", "orange", "red"];
+if (!state.colours.chord || !VALID_PRESET_IDS.includes(state.colours.chord)) {
+  state.colours.chord = "orange";
+}
+delete state.colours.playing;
+
 if (!state.passaggios) {
   state.passaggios = {
-    primo: { note: "E4", colour: "#3f9e52" },
-    secondo: { note: "G4", colour: "#2b7fe0" },
-    terzo: { note: "Bb4", colour: "#8a5fd6" }
+    primo: { note: "E4", colourId: "green" },
+    secondo: { note: "G4", colourId: "purple" },
+    custom: { note: "Bb4", colourId: null }
   };
 }
+// rename the old "terzo" passaggio to "custom" (keeping whatever note/colour
+// it already had) rather than dropping it, since Custom is meant to be the
+// same slot under a clearer name
+if (state.passaggios.terzo && !state.passaggios.custom) {
+  state.passaggios.custom = state.passaggios.terzo;
+}
+delete state.passaggios.terzo;
+// migrate each passaggio's old hex "colour" field to a preset id, and drop
+// any colourId that no longer exists in the trimmed palette - falls back to
+// "no colour" rather than guessing the wrong preset
+const PASSAGGIO_DEFAULTS = {
+  primo: { note: "E4", colourId: "green" },
+  secondo: { note: "G4", colourId: "purple" },
+  custom: { note: "Bb4", colourId: null }
+};
+["primo", "secondo", "custom"].forEach(key => {
+  if (!state.passaggios[key]) {
+    state.passaggios[key] = PASSAGGIO_DEFAULTS[key];
+    return;
+  }
+  const p = state.passaggios[key];
+  if (p.colour !== undefined) {
+    p.colourId = null;
+    delete p.colour;
+  }
+  if (p.colourId === undefined) p.colourId = null;
+  if (p.colourId !== null && !VALID_PRESET_IDS.includes(p.colourId)) {
+    p.colourId = null;
+  }
+});
 if (state.fontSize === undefined) state.fontSize = 18;
 if (state.pianoOctaves === undefined) state.pianoOctaves = 1.5;
 
@@ -1175,49 +1213,48 @@ function stopPlayback() {
   renderAll();
 }
 
-// Looks up whether a given midi note matches one of the three passaggios (by
-// note name, so enharmonic spelling doesn't matter), returning its colour key
-// object, or null if it's not a passaggio note or that passaggio has no
-// colour set ("no colour" opts a passaggio out entirely).
-function getPassaggioForMidi(midi) {
+// Looks up whether a given midi note matches one of the passaggios (by note
+// name, so enharmonic spelling doesn't matter), returning its colour preset,
+// or null if it's not a passaggio note or that passaggio has no colour set
+// ("no colour" opts a passaggio out entirely).
+function getPassaggioPresetForMidi(midi) {
   const name = midiToName(midi);
   for (let i = 0; i < PASSAGGIO_KEYS.length; i++) {
     const p = state.passaggios[PASSAGGIO_KEYS[i]];
-    if (p && p.note === name && p.colour) return p;
+    if (p && p.note === name && p.colourId) return getColourPreset(p.colourId);
   }
   return null;
 }
 
 // The single source of truth for what colour a key should show right now,
 // applied at render time and every time a key's playing/in-pattern status
-// changes. Priority: currently sounding > passaggio (if it has a colour set)
-// > in the current chord/arpeggio shape > plain.
+// changes. A note's BASE colour comes from, in priority order: its passaggio
+// (if it has a colour set) or the shared chord colour if not a passaggio at
+// all, or nothing if it's neither a passaggio nor in the current shape. Once
+// the base colour is decided, currently-sounding just picks the dark variant
+// of that same colour instead of the light one - it's not a separate colour.
 function applyKeyColour(midi) {
   const el = document.querySelector('.key[data-midi="' + midi + '"]');
   if (!el) return;
 
-  if (activeMidis.has(midi)) {
-    el.style.background = state.colours.playing;
-    el.style.boxShadow = "inset 0 0 0 2px " + state.colours.playing;
-    el.classList.add("coloured");
+  const passaggioPreset = getPassaggioPresetForMidi(midi);
+  const chordPreset = getColourPreset(state.colours.chord);
+  // a currently-sounding note always gets a colour, even in the unlikely case
+  // it's neither a passaggio nor (for some reason) marked in-pattern - falls
+  // back to chord's colour rather than showing nothing while actually playing
+  const basePreset = passaggioPreset || (activeMidis.has(midi) || inPatternMidis.has(midi) ? chordPreset : null);
+
+  if (!basePreset) {
+    el.style.background = "";
+    el.style.boxShadow = "";
+    el.classList.remove("coloured");
     return;
   }
-  const passaggio = getPassaggioForMidi(midi);
-  if (passaggio) {
-    el.style.background = passaggio.colour;
-    el.style.boxShadow = "inset 0 0 0 2px " + passaggio.colour;
-    el.classList.add("coloured");
-    return;
-  }
-  if (inPatternMidis.has(midi)) {
-    el.style.background = state.colours.chord;
-    el.style.boxShadow = "inset 0 0 0 2px " + state.colours.chord;
-    el.classList.add("coloured");
-    return;
-  }
-  el.style.background = "";
-  el.style.boxShadow = "";
-  el.classList.remove("coloured");
+
+  const shade = activeMidis.has(midi) ? basePreset.dark : basePreset.light;
+  el.style.background = shade;
+  el.style.boxShadow = "inset 0 0 0 2px " + shade;
+  el.classList.add("coloured");
 }
 
 // Repaints every key currently on screen - used after the piano itself is
@@ -1829,9 +1866,26 @@ function updateSettingsUI() {
 }
 
 // ---------- Colours & passaggios ----------
-const PASSAGGIO_KEYS = ["primo", "secondo", "terzo"];
-const PASSAGGIO_LABELS = { primo: "Primo", secondo: "Secondo", terzo: "Terzo" };
-const COLOUR_PRESETS = ["#3f9e52", "#2b7fe0", "#8a5fd6", "#d9483f", "#e08a2b", "#d64ea0", "#2bb5b0", "#f2d51c", "#6b6b66", "#1a1a18"];
+const PASSAGGIO_KEYS = ["primo", "secondo", "custom"];
+const PASSAGGIO_LABELS = { primo: "Primo", secondo: "Secondo", custom: "Custom" };
+
+// Each preset is a light/dark pair, hand-picked per colour rather than
+// computed from a formula, since automatic lightening/darkening doesn't look
+// equally good across every hue (yellow and purple need very different
+// treatment to both still read clearly). "light" is what shows normally
+// (idle, or in the current chord/arpeggio shape); "dark" is what shows the
+// instant that note is the one actually sounding.
+const COLOUR_PRESETS = [
+  { id: "green",  light: "#94cca1", dark: "#1fa855" },
+  { id: "blue",   light: "#8fbdf2", dark: "#1a7ce0" },
+  { id: "purple", light: "#c3aeed", dark: "#8a3be0" },
+  { id: "orange", light: "#f2c383", dark: "#f2790a" },
+  { id: "red",    light: "#f0a8a3", dark: "#f21c0a" }
+];
+
+function getColourPreset(id) {
+  return COLOUR_PRESETS.find(p => p.id === id) || null;
+}
 
 function passaggioNoteOptionsHTML(currentName) {
   let html = "";
@@ -1845,20 +1899,18 @@ function renderColoursList() {
   const el = document.getElementById("colours-list");
   if (!el) return;
 
+  const chordPreset = getColourPreset(state.colours.chord);
   let html = "";
   html += '<div class="colour-row">' +
     '<span class="colour-row-label">Chord</span>' +
-    '<div class="colour-swatch" style="background:' + state.colours.chord + '" onclick="openColourPicker(\'chord\')"></div>' +
-    '</div>';
-  html += '<div class="colour-row">' +
-    '<span class="colour-row-label">Currently playing</span>' +
-    '<div class="colour-swatch" style="background:' + state.colours.playing + '" onclick="openColourPicker(\'playing\')"></div>' +
+    '<div class="colour-swatch" style="background:' + (chordPreset ? chordPreset.light : "#ccc") + '" onclick="openColourPicker(\'chord\')"></div>' +
     '</div>';
 
   PASSAGGIO_KEYS.forEach(key => {
     const p = state.passaggios[key];
-    const swatchHtml = p.colour
-      ? '<div class="colour-swatch" style="background:' + p.colour + '" onclick="openColourPicker(\'' + key + '\')"></div>'
+    const preset = p.colourId ? getColourPreset(p.colourId) : null;
+    const swatchHtml = preset
+      ? '<div class="colour-swatch" style="background:' + preset.light + '" onclick="openColourPicker(\'' + key + '\')"></div>'
       : '<div class="colour-swatch no-colour" onclick="openColourPicker(\'' + key + '\')">&times;</div>';
     html += '<div class="colour-row">' +
       '<span class="colour-row-label">' + PASSAGGIO_LABELS[key] + '</span>' +
@@ -1876,17 +1928,17 @@ function setPassaggioNote(key, name) {
   repaintAllKeys();
 }
 
-let colourPickerTarget = null; // "chord" | "playing" | "primo" | "secondo" | "terzo"
+let colourPickerTarget = null; // "chord" | "primo" | "secondo"
 
 function openColourPicker(target) {
   colourPickerTarget = target;
   const isPassaggio = PASSAGGIO_KEYS.includes(target);
-  const current = isPassaggio ? state.passaggios[target].colour : state.colours[target];
-  const title = target === "chord" ? "Chord colour" : target === "playing" ? "Currently playing colour" : PASSAGGIO_LABELS[target] + " colour";
+  const currentId = isPassaggio ? state.passaggios[target].colourId : state.colours.chord;
+  const title = target === "chord" ? "Chord colour" : PASSAGGIO_LABELS[target] + " colour";
 
   let grid = "";
-  COLOUR_PRESETS.forEach(c => {
-    grid += '<div class="colour-picker-swatch' + (c === current ? " selected" : "") + '" style="background:' + c + '" onclick="pickColour(\'' + c + '\')"></div>';
+  COLOUR_PRESETS.forEach(p => {
+    grid += '<div class="colour-picker-swatch' + (p.id === currentId ? " selected" : "") + '" style="background:' + p.light + '" onclick="pickColour(\'' + p.id + '\')"></div>';
   });
 
   let html = '<div class="colour-picker-panel">' +
@@ -1902,12 +1954,14 @@ function openColourPicker(target) {
   overlay.classList.add("show");
 }
 
-function pickColour(colour) {
+function pickColour(colourId) {
   if (!colourPickerTarget) return;
-  if (colourPickerTarget === "chord" || colourPickerTarget === "playing") {
-    state.colours[colourPickerTarget] = colour;
+  if (colourPickerTarget === "chord") {
+    // Chord always needs a colour - "No colour" isn't offered for it, so
+    // colourId is never null here.
+    state.colours.chord = colourId;
   } else {
-    state.passaggios[colourPickerTarget].colour = colour;
+    state.passaggios[colourPickerTarget].colourId = colourId;
   }
   saveState();
   document.getElementById("colour-picker-overlay").classList.remove("show");
