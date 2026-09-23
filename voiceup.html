@@ -824,8 +824,8 @@
   }
 
   .black-key {
-    width: calc(var(--white-key-width, 22px) * 0.64);
-    height: calc(var(--piano-height, 90px) * 0.6);
+    width: var(--black-key-width, 14px);
+    height: var(--black-key-height, 54px);
     background: var(--key-black);
     border: 1px solid #000000;
     box-sizing: border-box;
@@ -845,7 +845,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.24</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.25</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -2110,13 +2110,22 @@ function renderPiano() {
   // extends off-screen and is reached via horizontal scroll/auto-scroll
   const visibleWhiteKeys = getVisibleWhiteKeyCount();
   const availableWidth = wrap ? wrap.clientWidth - 16 : 320; // minus the wrap's own padding
-  const whiteKeyWidth = Math.max(6, availableWidth / visibleWhiteKeys);
-  const pianoHeight = whiteKeyWidth * (90 / 22); // keep the original width:height ratio
+  // round to whole pixels so every key's computed size lands on a clean pixel
+  // boundary - a fractional size (e.g. 21.7px) makes borders render
+  // inconsistently thin/fuzzy on some keys but not others, purely from
+  // sub-pixel rounding differences, even when every border is the same
+  // specified thickness
+  const whiteKeyWidth = Math.round(Math.max(6, availableWidth / visibleWhiteKeys));
+  const pianoHeight = Math.round(whiteKeyWidth * (90 / 22)); // keep the original width:height ratio
+  const blackKeyWidth = Math.round(whiteKeyWidth * 0.64);
+  const blackKeyHeight = Math.round(pianoHeight * 0.6);
   const totalWhiteKeys = countWhiteKeys();
   const pianoTotalWidth = whiteKeyWidth * totalWhiteKeys;
 
   document.documentElement.style.setProperty("--white-key-width", whiteKeyWidth + "px");
   document.documentElement.style.setProperty("--piano-height", pianoHeight + "px");
+  document.documentElement.style.setProperty("--black-key-width", blackKeyWidth + "px");
+  document.documentElement.style.setProperty("--black-key-height", blackKeyHeight + "px");
   document.documentElement.style.setProperty("--piano-total-width", pianoTotalWidth + "px");
 
   // first pass: white keys
