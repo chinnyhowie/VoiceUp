@@ -845,7 +845,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.29</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.30</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1416,10 +1416,18 @@ async function playSlot(slotIndex) {
   const ctx = getCtx();
   const semis = degreesToSemitones(pattern.degrees);
 
+  // The chord underneath the arpeggio is always a plain major triad (1-3-5),
+  // extended to include the octave (1-3-5-8) only when the pattern itself
+  // reaches the octave - standard vocal warm-up convention doesn't build the
+  // chord from whichever scale degrees the melodic pattern happens to touch,
+  // it just anchors the tonic, adding the octave only when the exercise
+  // itself is going to reach that far.
+  const chordIntervals = semis.includes(12) ? [0, 4, 7, 12] : [0, 4, 7];
+
   // The stated range bounds EVERY note the pattern touches, not just where each
   // step's root sits - so the last usable root is the one whose highest reached
   // note (root + the pattern's own highest interval) still stays within highMidi.
-  const patternMaxInterval = Math.max(...semis, ...[0,4,7]);
+  const patternMaxInterval = Math.max(...semis, ...chordIntervals);
   const patternMinInterval = Math.min(...semis, 0);
   const lastUsableRoot = highMidi - patternMaxInterval;
   const firstUsableRoot = lowMidi - patternMinInterval;
@@ -1438,7 +1446,7 @@ async function playSlot(slotIndex) {
   // scheduling is ever delayed by an in-flight decode.
   const neededMidis = new Set();
   for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) {
-    [0,4,7].forEach(iv => neededMidis.add(root + iv)); // chord tones
+    chordIntervals.forEach(iv => neededMidis.add(root + iv)); // chord tones
     semis.forEach(iv => neededMidis.add(root + iv));   // arpeggio + repeated last note
   }
   try {
@@ -1477,6 +1485,12 @@ async function playSlot(slotIndex) {
   // playbackRun holds the mutable state for this run so other functions
   // (the tempo slider, a piano tap) can redirect it without reaching into
   // playSlot's closure.
+  // The chord underneath the arpeggio is always a plain major triad (1-3-5),
+  // extended to include the octave (1-3-5-8) only when the pattern itself
+  // reaches the octave - standard vocal warm-up convention doesn't build the
+  // chord from whichever scale degrees the melodic pattern happens to touch,
+  // it just anchors the tonic, adding the octave only when the exercise
+  // itself is going to reach that far.
   playbackRun = {
     token: myToken,
     slot: slot,
@@ -1484,6 +1498,7 @@ async function playSlot(slotIndex) {
     lowMidi: lowMidi,
     highMidi: highMidi,
     semis: semis,
+    chordIntervals: chordIntervals,
     oneWaySequence: oneWaySequence,
     rootSequence: rootSequence,
     ctx: ctx,
@@ -1534,7 +1549,7 @@ function scheduleRunStep(index) {
   const totalSteps = run.rootSequence.length;
 
   const semis = run.semis;
-  const chordTones = [0,4,7].map(iv => rootMidi + iv);
+  const chordTones = run.chordIntervals.map(iv => rootMidi + iv);
   const arpMidis = semis.map(iv => rootMidi + iv);
   const lastMidi = rootMidi + semis[semis.length - 1];
   const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
