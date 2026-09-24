@@ -845,7 +845,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.27</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.28</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1637,6 +1637,7 @@ function skipRunToNote(targetMidi) {
 
 // ---------- Rendering ----------
 let rangeTarget = null; // { slotIndex, which: 'start'|'end' } - set when a range field is tapped, so the note picker knows where to apply
+let addPatternOpenForSlot = null; // which slot's "add custom pattern" field is currently open, or null - read by renderSlotBody so it survives any re-render, not just a one-off classList change
 
 function slotSummaryText(slot) {
   if (!slot.patternId || !slot.start || !slot.end) return "Not set";
@@ -1689,7 +1690,7 @@ function renderSlotBody(slot, i, compact) {
   }
   html += '</div>';
 
-  html += '<div class="custom-pattern-add" id="custom-add-' + i + '">';
+  html += '<div class="custom-pattern-add' + (addPatternOpenForSlot === i ? ' show' : '') + '" id="custom-add-' + i + '">';
   html += '<input type="text" id="custom-input-' + i + '" placeholder="e.g. 1 5 3 1">';
   html += '<button onclick="addCustomPattern(' + i + ')">Add</button>';
   html += '</div>';
@@ -1737,18 +1738,22 @@ function renderAll() {
 
 function toggleSlot(i) {
   state.expandedSlot = state.expandedSlot === i ? -1 : i;
+  addPatternOpenForSlot = null;
   renderAll();
 }
 
 function onPatternChange(i, value) {
   if (value === "__add__") {
-    const el = document.getElementById("custom-add-" + i);
-    if (el) el.classList.add("show");
-    // revert select visually by re-render without changing patternId
+    // don't change the slot's actual pattern - just remember that this
+    // slot's custom-add field should be open, then re-render so
+    // renderSlotBody bakes the "show" class directly into the fresh HTML;
+    // a transient classList change here would be wiped out by any later
+    // re-render that doesn't know this field should stay open
+    addPatternOpenForSlot = i;
     renderAll();
-    document.getElementById("custom-add-" + i).classList.add("show");
     return;
   }
+  addPatternOpenForSlot = null;
   state.slots[i].patternId = value;
   saveState();
   renderAll();
@@ -1767,6 +1772,7 @@ function addCustomPattern(i) {
   const name = degrees.join(" ");
   state.customPatterns.push({ id, name, degrees, builtin: false });
   state.slots[i].patternId = id;
+  addPatternOpenForSlot = null;
   saveState();
   renderAll();
 }
