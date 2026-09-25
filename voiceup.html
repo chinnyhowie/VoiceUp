@@ -845,7 +845,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.31</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.32</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1551,8 +1551,12 @@ function scheduleRunStep(index) {
   const semis = run.semis;
   const chordTones = run.chordIntervals.map(iv => rootMidi + iv);
   const arpMidis = semis.map(iv => rootMidi + iv);
-  const lastMidi = rootMidi + semis[semis.length - 1];
-  const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, lastMidi]));
+  // the note repeated once after the arpeggio finishes (before the next
+  // chord) is the arpeggio's FIRST note, not its last - e.g. for 1-3-5-8-5-3-1
+  // that's the 1, and for 8-8-8-8-5-3-1 that's the 8, even though both
+  // patterns happen to end on 1
+  const repeatNoteMidi = rootMidi + semis[0];
+  const arpShapeMidis = Array.from(new Set(isLastStep ? arpMidis : [...arpMidis, repeatNoteMidi]));
   const allStepMidis = Array.from(new Set([...chordTones, ...arpShapeMidis]));
   const arpeggioExtremeMidi = stepDescending ? Math.min(...arpMidis) : Math.max(...arpMidis);
   const arpeggioExtremeLabel = stepDescending ? "lowest" : "highest";
@@ -1592,12 +1596,12 @@ function scheduleRunStep(index) {
     t += noteDur;
   });
 
-  // repeat the last arpeggio note once - EXCEPT on the very last step of the
-  // whole run, where nothing follows it and the repeat is unnecessary
+  // repeat the arpeggio's first note once - EXCEPT on the very last step of
+  // the whole run, where nothing follows it and the repeat is unnecessary
   if (!isLastStep) {
-    scheduleNotePlayback(lastMidi, t, noteDur, myToken);
+    scheduleNotePlayback(repeatNoteMidi, t, noteDur, myToken);
     const lastDelay = (t - ctxNow) * 1000;
-    highlightKeyAt(lastMidi, lastDelay, noteDur * 1000);
+    highlightKeyAt(repeatNoteMidi, lastDelay, noteDur * 1000);
     t += noteDur;
   }
 
