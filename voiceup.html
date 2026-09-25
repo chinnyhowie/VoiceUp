@@ -439,7 +439,17 @@
     background: var(--danger);
   }
 
+  .play-btn.pause-state {
+    background: #f2790a;
+  }
+
   .play-btn svg { display: block; }
+
+  .slot-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
 
   .slot.locked {
     opacity: 0.4;
@@ -845,7 +855,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.32</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.33</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1186,6 +1196,7 @@ let highlightTimeouts = [];
 let activeSlotIndex = null; // which slot is currently playing, or null
 let activeAudioSources = []; // AudioBufferSourceNodes currently scheduled/playing, so we can force-stop them
 let playbackRun = null; // mutable state for the step-by-step scheduler; see scheduleRunStep
+let isPaused = false; // true while the active slot is paused (playbackRun stays alive, just not advancing)
 let activeMidis = new Set(); // notes currently sounding right now (highest colour priority)
 let inPatternMidis = new Set(); // notes in the current step's arpeggio shape (chord colour, lowest priority)
 
@@ -1209,10 +1220,39 @@ function stopPlayback() {
     clearTimeout(playbackRun.nextStepTimeout);
   }
   playbackRun = null;
+  isPaused = false;
   document.getElementById("now-playing").innerHTML = "";
   clearPositionIndicator();
   activeSlotIndex = null;
   renderAll();
+}
+
+// Pauses the current run in place: cuts whatever's sounding right now and
+// cancels the pending "schedule next step" timer, but - unlike stopPlayback -
+// keeps playbackToken and playbackRun (including currentIndex) alive, so
+// resumePlayback can pick up from exactly this step later. isPaused is a
+// separate flag from activeSlotIndex/playbackRun themselves, since the slot
+// is still "active" (its row still shows as the in-focus one, still locks
+// out other slots) even though nothing is moving.
+function pausePlayback() {
+  if (!playbackRun || isPaused) return;
+  clearHighlights();
+  activeAudioSources.forEach(src => {
+    try { src.stop(0); } catch (e) { /* already stopped or ended, ignore */ }
+  });
+  activeAudioSources = [];
+  if (playbackRun.nextStepTimeout !== null) {
+    clearTimeout(playbackRun.nextStepTimeout);
+    playbackRun.nextStepTimeout = null;
+  }
+  isPaused = true;
+  renderAll();
+}
+
+function resumePlayback() {
+  if (!playbackRun || !isPaused) return;
+  isPaused = false;
+  scheduleRunStep(playbackRun.currentIndex);
 }
 
 // Looks up whether a given midi note matches one of the passaggios (by note
@@ -1374,12 +1414,13 @@ function clearPositionIndicator() {
 }
 
 async function playSlot(slotIndex) {
-  // if this slot is already playing, treat as stop
-  if (activeSlotIndex === slotIndex) {
-    stopPlayback();
+  // if this slot is paused, resume it rather than starting a fresh run
+  if (activeSlotIndex === slotIndex && isPaused) {
+    resumePlayback();
     return;
   }
-  // if another slot is active, ignore (UI already disables this, but guard anyway)
+  // if another slot is active (playing or paused), ignore - the UI already
+  // hides/disables this slot's own button in that case, but guard anyway
   if (activeSlotIndex !== null) return;
 
   const slot = state.slots[slotIndex];
@@ -1683,14 +1724,29 @@ function renderSlotHTML(slot, i, compact) {
   const isExpanded = !compact && state.expandedSlot === i;
   const pattern = slot.patternId ? getPattern(slot.patternId) : null;
   const isCustom = pattern && !pattern.builtin;
-  const isPlaying = activeSlotIndex === i;
+  const isActiveSlot = activeSlotIndex === i;
+  const isRunning = isActiveSlot && !isPaused;
+  const isPausedHere = isActiveSlot && isPaused;
   const isLocked = activeSlotIndex !== null && activeSlotIndex !== i;
 
   let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + '" data-slot="' + i + '">';
   html += '<div class="slot-header" onclick="toggleSlot(' + i + ')">';
   html += '<div class="slot-num">' + (i+1) + '</div>';
   html += '<div class="slot-summary">' + slotSummaryText(slot) + '</div>';
-  html += '<button class="play-btn' + (isPlaying ? " stop-state" : "") + '" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="' + (isPlaying ? "Stop" : "Play") + ' slot ' + (i+1) + '">' + (isPlaying ? stopIconSVG() : playIconSVG()) + '</button>';
+  html += '<div class="slot-controls">';
+  if (isRunning) {
+    // playing: Pause + Stop
+    html += '<button class="play-btn pause-state" onclick="event.stopPropagation(); pausePlayback()" aria-label="Pause slot ' + (i+1) + '">' + pauseIconSVG() + '</button>';
+    html += '<button class="play-btn stop-state" onclick="event.stopPropagation(); stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>';
+  } else if (isPausedHere) {
+    // paused: Play (resume) + Stop
+    html += '<button class="play-btn" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="Resume slot ' + (i+1) + '">' + playIconSVG() + '</button>';
+    html += '<button class="play-btn stop-state" onclick="event.stopPropagation(); stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>';
+  } else {
+    // idle: Play only
+    html += '<button class="play-btn" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="Play slot ' + (i+1) + '">' + playIconSVG() + '</button>';
+  }
+  html += '</div>';
   html += '</div>';
 
   if (!compact) {
@@ -1744,6 +1800,10 @@ function playIconSVG() {
 
 function stopIconSVG() {
   return '<svg width="12" height="12" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" fill="#ffffff"/></svg>';
+}
+
+function pauseIconSVG() {
+  return '<svg width="12" height="12" viewBox="0 0 24 24"><rect x="5" y="4" width="4.5" height="16" rx="1" fill="#ffffff"/><rect x="14.5" y="4" width="4.5" height="16" rx="1" fill="#ffffff"/></svg>';
 }
 
 function renderAll() {
@@ -2195,6 +2255,11 @@ function onKeyTap(midi) {
     saveState();
     closeAllOverlays();
     renderAll();
+    return;
+  }
+  if (activeSlotIndex !== null && isPaused) {
+    // paused - do nothing; resuming is an explicit action (the play button),
+    // not something a piano tap should trigger as a side effect
     return;
   }
   if (activeSlotIndex !== null && playbackRun) {
