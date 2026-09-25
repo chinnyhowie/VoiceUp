@@ -700,7 +700,6 @@
   }
 
   .pos-top-row.idle,
-  .pos-top-row.idle .pos-direction,
   .pos-top-row.idle .pos-note-val,
   .pos-top-row.idle .pos-note-label,
   .pos-top-row.idle .pos-step-label,
@@ -718,15 +717,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-  }
-
-  .pos-direction {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8em;
-    color: var(--text-muted);
-    flex: 1;
   }
 
   .pos-note {
@@ -748,8 +738,8 @@
     color: var(--text-muted);
   }
 
-  .pos-step {
-    text-align: right;
+  .pos-step-left {
+    text-align: left;
     flex: 1;
   }
 
@@ -761,6 +751,14 @@
   .pos-step-val {
     font-size: 0.92em;
     font-weight: 600;
+  }
+
+  .pos-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    flex: 1;
+    min-height: 30px;
   }
 
   .pos-blocks {
@@ -855,7 +853,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.34</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.35</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1369,49 +1367,160 @@ function updateNowPlaying(noteName) {
 // for this step with a highest/lowest label, step count, and the block
 // progress bar) - called once per step, at the same moment the chord for
 // that step starts sounding.
-function updatePositionIndicator(descending, extremeNoteName, extremeLabel, stepNumber, totalSteps, lowMidi, highMidi) {
+// Renders the shared now-playing bar in whichever of its four states
+// currently applies:
+//  - nothing selected: full dash placeholder, no button at all
+//  - a slot is expanded but not playing/paused: shows "0 / N" for that
+//    slot's step count (via computeRunPlan) and a Play button
+//  - the active slot is actually running: real step/note values, Stop+Pause
+//  - the active slot is paused: real (frozen) step/note values, Stop+Play
+// Which slot "wins" as the bar's target: the active (playing/paused) slot
+// always takes priority over merely-expanded ones, since it's still running
+// even if its own row has been collapsed; only when nothing is active does
+// the bar fall back to whichever slot is expanded, or dashes if none is.
+function renderPositionBar() {
   const el = document.getElementById("position-indicator");
   if (!el) return;
 
-  const dirIcon = descending
-    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>'
-    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>';
-  const dirLabel = descending ? "Descending" : "Ascending";
+  if (activeSlotIndex !== null) {
+    // playing or paused - real content is pushed here by
+    // updatePositionIndicator (called from scheduleRunStep) for the moving
+    // parts; this branch only needs to run when NOT mid-step-update, i.e.
+    // right when play/pause/stop is pressed, so the buttons update
+    // immediately without waiting for the next step to reach the point
+    // where it calls updatePositionIndicator itself.
+    renderPositionBarControlsOnly();
+    return;
+  }
+
+  const targetSlot = state.expandedSlot >= 0 ? state.expandedSlot : null;
+  if (targetSlot === null) {
+    renderPositionBarIdle();
+    return;
+  }
+
+  const plan = computeRunPlan(state.slots[targetSlot]);
+  const totalSteps = plan.error ? null : plan.rootSequence.length;
+  el.innerHTML =
+    '<div class="pos-top-row">' +
+      '<div class="pos-step-left"><div class="pos-step-label">step</div><div class="pos-step-val">' + (totalSteps === null ? '&mdash;' : ('0 / ' + totalSteps)) + '</div></div>' +
+      '<div class="pos-note"><span class="pos-note-val">&mdash;</span></div>' +
+      '<div class="pos-controls"><button class="play-btn" onclick="playSlot(' + targetSlot + ')" aria-label="Play slot ' + (targetSlot+1) + '">' + playIconSVG() + '</button></div>' +
+    '</div>' +
+    '<div class="pos-blocks">' + idleBlocksHTML(totalSteps || 9) + '</div>' +
+    '<div class="pos-bounds"><span>&mdash;</span><span>&mdash;</span></div>';
+}
+
+function renderPositionBarIdle() {
+  const el = document.getElementById("position-indicator");
+  if (!el) return;
+  el.innerHTML =
+    '<div class="pos-top-row idle">' +
+      '<div class="pos-step-left"><div class="pos-step-label">step</div><div class="pos-step-val">&mdash;</div></div>' +
+      '<div class="pos-note"><span class="pos-note-val">&mdash;</span></div>' +
+      '<div class="pos-controls"></div>' +
+    '</div>' +
+    '<div class="pos-blocks">' + idleBlocksHTML(9) + '</div>' +
+    '<div class="pos-bounds"><span>&mdash;</span><span>&mdash;</span></div>';
+}
+
+function idleBlocksHTML(count) {
+  let blocks = "";
+  for (let b = 0; b < count; b++) blocks += '<div class="pos-block idle"></div>';
+  return blocks;
+}
+
+// Repaints just the button area of the bar for the active slot's current
+// playing/paused state, without touching the step/note/blocks - used right
+// when play/pause/stop is pressed so the buttons flip instantly.
+function renderPositionBarControlsOnly() {
+  const controlsEl = document.querySelector("#position-indicator .pos-controls");
+  if (!controlsEl || activeSlotIndex === null) return;
+  const i = activeSlotIndex;
+  if (isPaused) {
+    controlsEl.innerHTML =
+      '<button class="play-btn stop-state" onclick="stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>' +
+      '<button class="play-btn" onclick="playSlot(' + i + ')" aria-label="Resume slot ' + (i+1) + '">' + playIconSVG() + '</button>';
+  } else {
+    controlsEl.innerHTML =
+      '<button class="play-btn stop-state" onclick="stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>' +
+      '<button class="play-btn pause-state" onclick="pausePlayback()" aria-label="Pause slot ' + (i+1) + '">' + pauseIconSVG() + '</button>';
+  }
+}
+
+function updatePositionIndicator(descending, extremeNoteName, extremeLabel, stepNumber, totalSteps, lowMidi, highMidi) {
+  const el = document.getElementById("position-indicator");
+  if (!el) return;
 
   let blocks = "";
   for (let b = 1; b <= totalSteps; b++) {
     blocks += '<div class="pos-block' + (b <= stepNumber ? ' filled' : '') + '"></div>';
   }
 
+  const i = activeSlotIndex;
+  const controlsHTML = isPaused
+    ? '<button class="play-btn stop-state" onclick="stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>' +
+      '<button class="play-btn" onclick="playSlot(' + i + ')" aria-label="Resume slot ' + (i+1) + '">' + playIconSVG() + '</button>'
+    : '<button class="play-btn stop-state" onclick="stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>' +
+      '<button class="play-btn pause-state" onclick="pausePlayback()" aria-label="Pause slot ' + (i+1) + '">' + pauseIconSVG() + '</button>';
+
   el.innerHTML =
     '<div class="pos-top-row">' +
-      '<div class="pos-direction">' + dirIcon + '<span>' + dirLabel + '</span></div>' +
+      '<div class="pos-step-left"><div class="pos-step-label">step</div><div class="pos-step-val">' + stepNumber + ' / ' + totalSteps + '</div></div>' +
       '<div class="pos-note"><span class="pos-note-val">' + extremeNoteName + '</span><span class="pos-note-label">' + extremeLabel + '</span></div>' +
-      '<div class="pos-step"><div class="pos-step-label">step</div><div class="pos-step-val">' + stepNumber + ' / ' + totalSteps + '</div></div>' +
+      '<div class="pos-controls">' + controlsHTML + '</div>' +
     '</div>' +
     '<div class="pos-blocks">' + blocks + '</div>' +
     '<div class="pos-bounds"><span>' + midiToName(lowMidi) + '</span><span>' + midiToName(highMidi) + '</span></div>';
 }
 
 function clearPositionIndicator() {
-  const el = document.getElementById("position-indicator");
-  if (!el) return;
-  // Idle placeholder - kept always visible (rather than hidden) so this
-  // element's height never changes between playing and not playing, which is
-  // what stops the piano below from jumping up and down when playback starts
-  // or stops.
-  let blocks = "";
-  for (let b = 0; b < 9; b++) {
-    blocks += '<div class="pos-block idle"></div>';
+  renderPositionBar();
+}
+
+// Computes the full step plan for a slot (its root sequence, including the
+// reverse-at-end return leg if enabled) without touching any playback state -
+// pure so it can be used both to actually start a run (playSlot) and to show
+// a step count for a slot that's merely selected, not yet playing. Returns
+// { error } if the slot isn't fully configured or its range doesn't fit the
+// pattern, otherwise returns { rootSequence, oneWaySequence, descending,
+// lowMidi, highMidi, chordIntervals, semis }.
+function computeRunPlan(slot) {
+  if (!slot.patternId || !slot.start || !slot.end) return { error: "pattern or range not fully set" };
+  const pattern = getPattern(slot.patternId);
+  if (!pattern) return { error: 'pattern "' + slot.patternId + '" not found' };
+
+  const noteAMidi = nameToMidi(slot.start);
+  const noteBMidi = nameToMidi(slot.end);
+  if (noteAMidi === null || noteBMidi === null) return { error: "invalid range (" + slot.start + " to " + slot.end + ")" };
+
+  const descending = noteAMidi > noteBMidi;
+  const lowMidi = Math.min(noteAMidi, noteBMidi);
+  const highMidi = Math.max(noteAMidi, noteBMidi);
+  const semis = degreesToSemitones(pattern.degrees);
+  const chordIntervals = semis.includes(12) ? [0, 4, 7, 12] : [0, 4, 7];
+
+  const patternMaxInterval = Math.max(...semis, ...chordIntervals);
+  const patternMinInterval = Math.min(...semis, 0);
+  const lastUsableRoot = highMidi - patternMaxInterval;
+  const firstUsableRoot = lowMidi - patternMinInterval;
+  const effectiveLowRoot = Math.max(lowMidi, firstUsableRoot);
+  const effectiveHighRoot = Math.min(highMidi, lastUsableRoot);
+  if (effectiveLowRoot > effectiveHighRoot) return { error: "range too narrow for this pattern" };
+
+  const oneWaySequence = [];
+  if (descending) {
+    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) oneWaySequence.push(root);
+  } else {
+    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) oneWaySequence.push(root);
   }
-  el.innerHTML =
-    '<div class="pos-top-row idle">' +
-      '<div class="pos-direction"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg><span>&mdash;</span></div>' +
-      '<div class="pos-note"><span class="pos-note-val">&mdash;</span><span class="pos-note-label">&mdash;</span></div>' +
-      '<div class="pos-step"><div class="pos-step-label">step</div><div class="pos-step-val">&mdash;</div></div>' +
-    '</div>' +
-    '<div class="pos-blocks">' + blocks + '</div>' +
-    '<div class="pos-bounds"><span>&mdash;</span><span>&mdash;</span></div>';
+  let rootSequence = oneWaySequence;
+  if (slot.reverseAtEnd && oneWaySequence.length > 1) {
+    const returnLeg = oneWaySequence.slice(0, -1).reverse();
+    rootSequence = oneWaySequence.concat(returnLeg);
+  }
+
+  return { rootSequence, oneWaySequence, descending, lowMidi, highMidi, chordIntervals, semis, effectiveLowRoot, effectiveHighRoot };
 }
 
 async function playSlot(slotIndex) {
@@ -1425,28 +1534,12 @@ async function playSlot(slotIndex) {
   if (activeSlotIndex !== null) return;
 
   const slot = state.slots[slotIndex];
-  if (!slot.patternId || !slot.start || !slot.end) {
-    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': pattern or range not fully set</span>';
+  const plan = computeRunPlan(slot);
+  if (plan.error) {
+    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': ' + plan.error + '</span>';
     return;
   }
-  const pattern = getPattern(slot.patternId);
-  if (!pattern) {
-    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': pattern "' + slot.patternId + '" not found</span>';
-    return;
-  }
-
-  const noteAMidi = nameToMidi(slot.start);
-  const noteBMidi = nameToMidi(slot.end);
-  if (noteAMidi === null || noteBMidi === null) {
-    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': invalid range (' + slot.start + ' to ' + slot.end + ')</span>';
-    return;
-  }
-  // start set higher than end means a deliberate descending run - the app
-  // plays root-by-root from whichever side is actually higher down to whichever
-  // is actually lower, rather than treating this as an error.
-  const descending = noteAMidi > noteBMidi;
-  const lowMidi = Math.min(noteAMidi, noteBMidi);
-  const highMidi = Math.max(noteAMidi, noteBMidi);
+  const { descending, lowMidi, highMidi, chordIntervals, semis, effectiveLowRoot, effectiveHighRoot, oneWaySequence, rootSequence } = plan;
 
   playbackToken++;
   const myToken = playbackToken;
@@ -1456,32 +1549,6 @@ async function playSlot(slotIndex) {
   renderAll();
 
   const ctx = getCtx();
-  const semis = degreesToSemitones(pattern.degrees);
-
-  // The chord underneath the arpeggio is always a plain major triad (1-3-5),
-  // extended to include the octave (1-3-5-8) only when the pattern itself
-  // reaches the octave - standard vocal warm-up convention doesn't build the
-  // chord from whichever scale degrees the melodic pattern happens to touch,
-  // it just anchors the tonic, adding the octave only when the exercise
-  // itself is going to reach that far.
-  const chordIntervals = semis.includes(12) ? [0, 4, 7, 12] : [0, 4, 7];
-
-  // The stated range bounds EVERY note the pattern touches, not just where each
-  // step's root sits - so the last usable root is the one whose highest reached
-  // note (root + the pattern's own highest interval) still stays within highMidi.
-  const patternMaxInterval = Math.max(...semis, ...chordIntervals);
-  const patternMinInterval = Math.min(...semis, 0);
-  const lastUsableRoot = highMidi - patternMaxInterval;
-  const firstUsableRoot = lowMidi - patternMinInterval;
-  const effectiveLowRoot = Math.max(lowMidi, firstUsableRoot);
-  const effectiveHighRoot = Math.min(highMidi, lastUsableRoot);
-
-  if (effectiveLowRoot > effectiveHighRoot) {
-    document.getElementById("now-playing").innerHTML = '<span style="font-size:13px; color: var(--danger);">Slot ' + (slotIndex+1) + ': range too narrow for this pattern</span>';
-    activeSlotIndex = null;
-    renderAll();
-    return;
-  }
 
   // Pre-decode every distinct sample this run will ever need (across both the
   // outbound and, if reverse-at-end is on, the return leg), so no audio
@@ -1497,23 +1564,6 @@ async function playSlot(slotIndex) {
 
   // bail out if stopped while we were loading
   if (myToken !== playbackToken) return;
-
-  const oneWaySequence = [];
-  if (descending) {
-    for (let root = effectiveHighRoot; root >= effectiveLowRoot; root--) oneWaySequence.push(root);
-  } else {
-    for (let root = effectiveLowRoot; root <= effectiveHighRoot; root++) oneWaySequence.push(root);
-  }
-
-  // Reverse-at-end: after reaching the far boundary, play the same roots back
-  // down to the start. The boundary root itself isn't repeated back-to-back,
-  // so the return leg is the one-way sequence reversed, minus its own last
-  // (turnaround) root.
-  let rootSequence = oneWaySequence;
-  if (slot.reverseAtEnd && oneWaySequence.length > 1) {
-    const returnLeg = oneWaySequence.slice(0, -1).reverse();
-    rootSequence = oneWaySequence.concat(returnLeg);
-  }
 
   // ---- Step-by-step scheduler ----
   // Rather than computing every step's exact timestamp up front (which would
@@ -1725,29 +1775,12 @@ function renderSlotHTML(slot, i, compact) {
   const isExpanded = !compact && state.expandedSlot === i;
   const pattern = slot.patternId ? getPattern(slot.patternId) : null;
   const isCustom = pattern && !pattern.builtin;
-  const isActiveSlot = activeSlotIndex === i;
-  const isRunning = isActiveSlot && !isPaused;
-  const isPausedHere = isActiveSlot && isPaused;
   const isLocked = activeSlotIndex !== null && activeSlotIndex !== i;
 
   let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + '" data-slot="' + i + '">';
   html += '<div class="slot-header" onclick="toggleSlot(' + i + ')">';
   html += '<div class="slot-num">' + (i+1) + '</div>';
   html += '<div class="slot-summary">' + slotSummaryText(slot) + '</div>';
-  html += '<div class="slot-controls">';
-  if (isRunning) {
-    // playing: Pause + Stop
-    html += '<button class="play-btn pause-state" onclick="event.stopPropagation(); pausePlayback()" aria-label="Pause slot ' + (i+1) + '">' + pauseIconSVG() + '</button>';
-    html += '<button class="play-btn stop-state" onclick="event.stopPropagation(); stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>';
-  } else if (isPausedHere) {
-    // paused: Play (resume) + Stop
-    html += '<button class="play-btn" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="Resume slot ' + (i+1) + '">' + playIconSVG() + '</button>';
-    html += '<button class="play-btn stop-state" onclick="event.stopPropagation(); stopPlayback()" aria-label="Stop slot ' + (i+1) + '">' + stopIconSVG() + '</button>';
-  } else {
-    // idle: Play only
-    html += '<button class="play-btn" onclick="event.stopPropagation(); playSlot(' + i + ')" aria-label="Play slot ' + (i+1) + '">' + playIconSVG() + '</button>';
-  }
-  html += '</div>';
   html += '</div>';
 
   if (!compact) {
@@ -1818,10 +1851,16 @@ function renderAll() {
 
   document.getElementById("tempo-val-num").textContent = state.tempo;
 
+  renderPositionBar();
   renderPiano();
 }
 
 function toggleSlot(i) {
+  // if some other slot is actively playing or paused, ignore taps on any
+  // slot except that one - CSS (.locked / pointer-events:none) already
+  // prevents this click from landing, but guard here too in case that ever
+  // changes, since switching slots mid-run must not be possible
+  if (activeSlotIndex !== null && activeSlotIndex !== i) return;
   state.expandedSlot = state.expandedSlot === i ? -1 : i;
   addPatternOpenForSlot = null;
   renderAll();
