@@ -384,9 +384,51 @@
   .slot-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     margin-bottom: 8px;
+  }
+
+  .slot-header-tap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
     cursor: pointer;
+  }
+
+  .slot-expand-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .slot.now-playing-slot {
+    background: var(--accent-bg);
+    border: 2px solid var(--accent-strong);
+    padding: 8px 11px;
+  }
+
+  .slot.now-playing-slot .slot-summary {
+    font-weight: 600;
+  }
+
+  .slot.now-playing-slot .slot-num {
+    background: var(--card);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+
+  .slot.now-playing-slot .slot-expand-btn {
+    color: var(--accent-text);
   }
 
   .slot-num {
@@ -853,7 +895,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.35</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.36</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1032,6 +1074,7 @@ let state = loadState() || {
   ],
   tempo: 90,
   expandedSlot: 0,
+  selectedSlot: 0,
   theme: "auto",
   fontSize: 18,
   pianoOctaves: 1.5,
@@ -1054,6 +1097,7 @@ if (state.slots) {
   });
 }
 if (state.theme === undefined) state.theme = "auto";
+if (state.selectedSlot === undefined) state.selectedSlot = state.expandedSlot >= 0 ? state.expandedSlot : -1;
 if (!state.colours) {
   state.colours = { chord: "orange" };
 }
@@ -1393,7 +1437,7 @@ function renderPositionBar() {
     return;
   }
 
-  const targetSlot = state.expandedSlot >= 0 ? state.expandedSlot : null;
+  const targetSlot = state.selectedSlot >= 0 ? state.selectedSlot : null;
   if (targetSlot === null) {
     renderPositionBarIdle();
     return;
@@ -1776,11 +1820,15 @@ function renderSlotHTML(slot, i, compact) {
   const pattern = slot.patternId ? getPattern(slot.patternId) : null;
   const isCustom = pattern && !pattern.builtin;
   const isLocked = activeSlotIndex !== null && activeSlotIndex !== i;
+  const isPlayingHere = activeSlotIndex === i;
 
-  let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + '" data-slot="' + i + '">';
-  html += '<div class="slot-header" onclick="toggleSlot(' + i + ')">';
+  let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + (isPlayingHere ? " now-playing-slot" : "") + '" data-slot="' + i + '">';
+  html += '<div class="slot-header">';
+  html += '<div class="slot-header-tap" onclick="selectSlot(' + i + ')">';
   html += '<div class="slot-num">' + (i+1) + '</div>';
   html += '<div class="slot-summary">' + slotSummaryText(slot) + '</div>';
+  html += '</div>';
+  html += '<button class="slot-expand-btn" onclick="event.stopPropagation(); toggleSlot(' + i + ')" aria-label="' + (isExpanded ? "Collapse" : "Expand") + ' slot ' + (i+1) + '">' + chevronIconSVG(isExpanded) + '</button>';
   html += '</div>';
 
   if (!compact) {
@@ -1840,6 +1888,13 @@ function pauseIconSVG() {
   return '<svg width="12" height="12" viewBox="0 0 24 24"><rect x="5" y="4" width="4.5" height="16" rx="1" fill="#ffffff"/><rect x="14.5" y="4" width="4.5" height="16" rx="1" fill="#ffffff"/></svg>';
 }
 
+// down when collapsed ("more to reveal below"), up when expanded ("tap to
+// close") - matches the standard accordion chevron convention
+function chevronIconSVG(isExpanded) {
+  const points = isExpanded ? "18 15 12 9 6 15" : "6 9 12 15 18 9";
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="' + points + '"></polyline></svg>';
+}
+
 function renderAll() {
   const portrait = document.getElementById("portrait-slots");
 
@@ -1862,11 +1917,22 @@ function toggleSlot(i) {
   // changes, since switching slots mid-run must not be possible
   if (activeSlotIndex !== null && activeSlotIndex !== i) return;
   state.expandedSlot = state.expandedSlot === i ? -1 : i;
+  // expanding a slot also selects it (collapsing does not deselect it) -
+  // this is the only way selection and expansion are linked; tapping the
+  // rest of the row (selectSlot) never expands
+  if (state.expandedSlot === i) state.selectedSlot = i;
   addPatternOpenForSlot = null;
   renderAll();
 }
 
-function onPatternChange(i, value) {
+function selectSlot(i) {
+  // tapping the body of a slot's row selects it for the now-playing bar
+  // without expanding its pattern/range editor - expansion is the chevron's
+  // job alone (toggleSlot)
+  if (activeSlotIndex !== null && activeSlotIndex !== i) return;
+  state.selectedSlot = i;
+  renderAll();
+}function onPatternChange(i, value) {
   if (value === "__add__") {
     // don't change the slot's actual pattern - just remember that this
     // slot's custom-add field should be open, then re-render so
@@ -2155,6 +2221,7 @@ function setSlotCount(count) {
   }
 
   if (state.expandedSlot >= count) state.expandedSlot = -1;
+  if (state.selectedSlot >= count) state.selectedSlot = -1;
 
   saveState();
   updateSettingsUI();
@@ -2352,6 +2419,7 @@ function onTapTempo() {
 
 // ---------- Init ----------
 window.toggleSlot = toggleSlot;
+window.selectSlot = selectSlot;
 window.onPatternChange = onPatternChange;
 window.addCustomPattern = addCustomPattern;
 window.deletePattern = deletePattern;
