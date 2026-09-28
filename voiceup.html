@@ -16,6 +16,7 @@
     --accent-text: #1f6b3f;
     --accent: #1f6b3f;
     --accent-strong: #2d6a4f;
+    --selected-tint: #f1f9f4;
     --input-bg: #ffffff;
     --danger: #b3271e;
     --key-white: #ffffff;
@@ -39,6 +40,7 @@
     --accent-text: #b7e4c7;
     --accent: #6fcf97;
     --accent-strong: #2d6a4f;
+    --selected-tint: #1c2b24;
     --input-bg: #14171a;
     --danger: #e0776d;
     --key-white: #2a2e32;
@@ -62,6 +64,7 @@
       --accent-text: #b7e4c7;
       --accent: #6fcf97;
       --accent-strong: #2d6a4f;
+      --selected-tint: #1c2b24;
       --input-bg: #14171a;
       --danger: #e0776d;
       --key-white: #2a2e32;
@@ -379,6 +382,17 @@
 
   .slot.active {
     border-color: var(--accent-strong);
+  }
+
+  /* selected (will play when Play is pressed) but not currently playing:
+     a faint tint plus a heavier border than the 0.5px configured-slot
+     border, deliberately weaker than .now-playing-slot below so the two
+     states stay distinguishable. padding is trimmed by the extra 0.5px so
+     the row's outer size matches its neighbours. */
+  .slot.selected-slot:not(.now-playing-slot) {
+    background: var(--selected-tint);
+    border: 1px solid var(--accent-strong);
+    padding: 8.5px 11.5px;
   }
 
   .slot-header {
@@ -768,6 +782,24 @@
     justify-content: center;
     gap: 1px;
     flex-shrink: 0;
+    /* the playing state stacks a note value and a highest/lowest label; the
+       selected-but-idle state shows a single circled slot number instead.
+       min-height keeps the bar the same height in both, so the piano below
+       doesn't shift when playback starts or stops */
+    min-height: 2.4em;
+  }
+
+  .pos-slot-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: 600;
   }
 
   .pos-note-val {
@@ -895,7 +927,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.36</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.37</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -1448,7 +1480,7 @@ function renderPositionBar() {
   el.innerHTML =
     '<div class="pos-top-row">' +
       '<div class="pos-step-left"><div class="pos-step-label">step</div><div class="pos-step-val">' + (totalSteps === null ? '&mdash;' : ('0 / ' + totalSteps)) + '</div></div>' +
-      '<div class="pos-note"><span class="pos-note-val">&mdash;</span></div>' +
+      '<div class="pos-note"><div class="pos-slot-badge" aria-label="Selected slot ' + (targetSlot+1) + '">' + (targetSlot+1) + '</div></div>' +
       '<div class="pos-controls"><button class="play-btn" onclick="playSlot(' + targetSlot + ')" aria-label="Play slot ' + (targetSlot+1) + '">' + playIconSVG() + '</button></div>' +
     '</div>' +
     '<div class="pos-blocks">' + idleBlocksHTML(totalSteps || 9) + '</div>' +
@@ -1821,8 +1853,9 @@ function renderSlotHTML(slot, i, compact) {
   const isCustom = pattern && !pattern.builtin;
   const isLocked = activeSlotIndex !== null && activeSlotIndex !== i;
   const isPlayingHere = activeSlotIndex === i;
+  const isSelected = state.selectedSlot === i;
 
-  let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + (isPlayingHere ? " now-playing-slot" : "") + '" data-slot="' + i + '">';
+  let html = '<div class="slot' + (slot.patternId ? " active" : "") + (isExpanded ? " expanded" : "") + (isLocked ? " locked" : "") + (isPlayingHere ? " now-playing-slot" : "") + (isSelected ? " selected-slot" : "") + '" data-slot="' + i + '">';
   html += '<div class="slot-header">';
   html += '<div class="slot-header-tap" onclick="selectSlot(' + i + ')">';
   html += '<div class="slot-num">' + (i+1) + '</div>';
@@ -1932,7 +1965,9 @@ function selectSlot(i) {
   if (activeSlotIndex !== null && activeSlotIndex !== i) return;
   state.selectedSlot = i;
   renderAll();
-}function onPatternChange(i, value) {
+}
+
+function onPatternChange(i, value) {
   if (value === "__add__") {
     // don't change the slot's actual pattern - just remember that this
     // slot's custom-add field should be open, then re-render so
