@@ -17,6 +17,11 @@
     --accent: #1f6b3f;
     --accent-strong: #2d6a4f;
     --selected-tint: #f1f9f4;
+    --selected-border: #2d6a4f;
+    --block-empty-bg: #f7f7f5;
+    --block-idle-bg: #ffffff;
+    --block-border: #ddddd9;
+    --key-label: #6b6b66;
     --input-bg: #ffffff;
     --danger: #b3271e;
     --key-white: #ffffff;
@@ -40,10 +45,15 @@
     --accent-text: #b7e4c7;
     --accent: #6fcf97;
     --accent-strong: #2d6a4f;
-    --selected-tint: #1c2b24;
+    --selected-tint: #2b4a3a;
+    --selected-border: #6fcf97;
+    --block-empty-bg: #2c3238;
+    --block-idle-bg: #2c3238;
+    --block-border: #5c636a;
+    --key-label: #4a4a46;
     --input-bg: #14171a;
     --danger: #e0776d;
-    --key-white: #2a2e32;
+    --key-white: #e8e8e6;
     --key-white-border: #444a50;
     --key-black: #0d0f11;
     --key-active: #6fcf97;
@@ -64,10 +74,15 @@
       --accent-text: #b7e4c7;
       --accent: #6fcf97;
       --accent-strong: #2d6a4f;
-      --selected-tint: #1c2b24;
+      --selected-tint: #2b4a3a;
+      --selected-border: #6fcf97;
+      --block-empty-bg: #2c3238;
+      --block-idle-bg: #2c3238;
+      --block-border: #5c636a;
+      --key-label: #4a4a46;
       --input-bg: #14171a;
       --danger: #e0776d;
-      --key-white: #2a2e32;
+      --key-white: #e8e8e6;
       --key-white-border: #444a50;
       --key-black: #0d0f11;
       --key-active: #6fcf97;
@@ -391,7 +406,7 @@
      the row's outer size matches its neighbours. */
   .slot.selected-slot:not(.now-playing-slot) {
     background: var(--selected-tint);
-    border: 1px solid var(--accent-strong);
+    border: 1px solid var(--selected-border);
     padding: 8.5px 11.5px;
   }
 
@@ -765,8 +780,8 @@
   }
 
   .pos-block.idle {
-    background: var(--card);
-    border-color: var(--card-border);
+    background: var(--block-idle-bg);
+    border-color: var(--block-border);
   }
 
   .pos-top-row {
@@ -846,8 +861,8 @@
   .pos-block {
     height: 6px;
     border-radius: 2px;
-    background: var(--bg);
-    border: 1px solid var(--card-border);
+    background: var(--block-empty-bg);
+    border: 1px solid var(--block-border);
   }
 
   .pos-block.filled {
@@ -896,7 +911,7 @@
     right: 0;
     text-align: center;
     font-size: 0.67em;
-    color: var(--text-muted);
+    color: var(--key-label);
     pointer-events: none;
   }
 
@@ -927,7 +942,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.37</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.38</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
