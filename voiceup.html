@@ -16,8 +16,9 @@
     --accent-text: #1f6b3f;
     --accent: #1f6b3f;
     --accent-strong: #2d6a4f;
-    --selected-tint: #f1f9f4;
+    --selected-tint: #e6f5ec;
     --selected-border: #2d6a4f;
+    --playing-border: #2d6a4f;
     --block-empty-bg: #f7f7f5;
     --block-idle-bg: #ffffff;
     --block-border: #ddddd9;
@@ -47,6 +48,7 @@
     --accent-strong: #2d6a4f;
     --selected-tint: #2b4a3a;
     --selected-border: #6fcf97;
+    --playing-border: #6fcf97;
     --block-empty-bg: #2c3238;
     --block-idle-bg: #2c3238;
     --block-border: #5c636a;
@@ -76,6 +78,7 @@
       --accent-strong: #2d6a4f;
       --selected-tint: #2b4a3a;
       --selected-border: #6fcf97;
+      --playing-border: #6fcf97;
       --block-empty-bg: #2c3238;
       --block-idle-bg: #2c3238;
       --block-border: #5c636a;
@@ -400,14 +403,14 @@
   }
 
   /* selected (will play when Play is pressed) but not currently playing:
-     a faint tint plus a heavier border than the 0.5px configured-slot
-     border, deliberately weaker than .now-playing-slot below so the two
-     states stay distinguishable. padding is trimmed by the extra 0.5px so
-     the row's outer size matches its neighbours. */
+     same 2px border weight as .now-playing-slot below, with a lighter fill
+     and normal-weight text - the fill and the bold text are what tell the
+     two states apart. padding is trimmed by 1.5px so the row's outer size
+     matches the 0.5px-border rows around it (0.5 + 9 = 2 + 7.5). */
   .slot.selected-slot:not(.now-playing-slot) {
     background: var(--selected-tint);
-    border: 1px solid var(--selected-border);
-    padding: 8.5px 11.5px;
+    border: 2px solid var(--selected-border);
+    padding: 7.5px 10.5px;
   }
 
   .slot-header {
@@ -442,8 +445,11 @@
 
   .slot.now-playing-slot {
     background: var(--accent-bg);
-    border: 2px solid var(--accent-strong);
-    padding: 8px 11px;
+    border: 2px solid var(--playing-border);
+    /* 7.5px (not 8px) so 2px border + padding = the same 9.5px per side as
+       every other row; 8px made this row 1px taller and shifted everything
+       below it when playback started */
+    padding: 7.5px 10.5px;
   }
 
   .slot.now-playing-slot .slot-summary {
@@ -942,7 +948,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.38</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.39</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
