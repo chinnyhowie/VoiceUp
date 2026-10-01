@@ -156,6 +156,52 @@
   }
   .settings-overlay.show { display: block; }
 
+  .confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(300px, 86vw);
+    background: var(--card);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 52;
+    display: none;
+  }
+  .confirm-dialog.show { display: block; }
+
+  .confirm-dialog-text {
+    font-size: 0.95em;
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+
+  .confirm-dialog-buttons {
+    display: flex;
+    gap: 10px;
+  }
+
+  .confirm-dialog-buttons button {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 8px;
+    border: 0.5px solid var(--card-border);
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+
+  .confirm-dialog-cancel {
+    background: var(--card);
+    color: inherit;
+  }
+
+  .confirm-dialog-ok {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #ffffff;
+  }
+
   .settings-overlay-header {
     display: flex;
     align-items: center;
@@ -531,6 +577,18 @@
   .slot.locked {
     opacity: 0.4;
     pointer-events: none;
+  }
+
+  /* a locked slot (any slot other than the one currently playing) stays
+     fully editable: expand/collapse, pattern choice, start/end range, and
+     reverse-at-end can all be changed without disturbing playback. Only
+     selecting the slot (the header's row-body tap, via selectSlot) stays
+     blocked, since that would redirect the now-playing bar to a slot that
+     isn't actually playing. */
+  .slot.locked .slot-expand-btn,
+  .slot.locked .slot-body {
+    pointer-events: auto;
+    opacity: 1;
   }
 
   .tap-btn {
@@ -948,7 +1006,7 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.39</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.40</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
 <div class="tempo-block">
@@ -975,6 +1033,14 @@
 
 
 <div class="overlay-backdrop" id="overlay-backdrop" onclick="closeAllOverlays()"></div>
+
+<div class="confirm-dialog" id="confirm-dialog">
+  <div class="confirm-dialog-text" id="confirm-dialog-text"></div>
+  <div class="confirm-dialog-buttons">
+    <button class="confirm-dialog-cancel" id="confirm-dialog-cancel" onclick="closeConfirmDialog()">Cancel</button>
+    <button class="confirm-dialog-ok" id="confirm-dialog-ok" onclick="confirmDialogConfirm()">Delete</button>
+  </div>
+</div>
 
 <div class="settings-overlay" id="settings-overlay">
   <div class="settings-overlay-header">
@@ -1090,6 +1156,7 @@ for (let m = LOWEST_MIDI; m <= HIGHEST_MIDI; m++) {
 const BUILTIN_PATTERNS = [
   { id: "p123454321", name: "1 2 3 4 5 4 3 2 1", degrees: [1,2,3,4,5,4,3,2,1], builtin: true },
   { id: "p1358531", name: "1 3 5 8 5 3 1", degrees: [1,3,5,8,5,3,1], builtin: true },
+  { id: "p54321", name: "5 4 3 2 1", degrees: [5,4,3,2,1], builtin: true },
   { id: "p8888531", name: "8 8 8 8 5 3 1", degrees: [8,8,8,8,5,3,1], builtin: true }
 ];
 
@@ -1814,14 +1881,15 @@ function scheduleRunStep(index) {
   }, stepTotalMs);
 }
 
-// Jumps the currently playing run to the step whose root is closest to
-// targetMidi, keeping the run's original direction (ascending stays
-// ascending, descending stays descending). For a reverse-at-end slot, the
-// same root can appear on both the outbound and return leg, so the search
-// is restricted to whichever leg the run is currently on - otherwise a tap
-// on the return leg could silently jump back onto the outbound leg and
-// reverse the direction of travel, which is exactly what "preserve
-// direction" rules out.
+// Jumps the currently playing run to the step whose arpeggio FIRST note
+// (root + semis[0] - e.g. the 8 in 8-8-8-8-5-3-1, not the root the pattern
+// is built on) is closest to targetMidi, keeping the run's original
+// direction (ascending stays ascending, descending stays descending). For a
+// reverse-at-end slot, the same note can appear on both the outbound and
+// return leg, so the search is restricted to whichever leg the run is
+// currently on - otherwise a tap on the return leg could silently jump back
+// onto the outbound leg and reverse the direction of travel, which is
+// exactly what "preserve direction" rules out.
 function skipRunToNote(targetMidi) {
   const run = playbackRun;
   if (!run || run.token !== playbackToken) return;
@@ -1829,11 +1897,12 @@ function skipRunToNote(targetMidi) {
   const onReturnLeg = run.currentIndex >= run.oneWaySequence.length;
   const legStart = onReturnLeg ? run.oneWaySequence.length : 0;
   const legEnd = onReturnLeg ? run.rootSequence.length : run.oneWaySequence.length;
+  const firstNoteOffset = run.semis[0];
 
   let bestIndex = legStart;
   let bestDist = Infinity;
   for (let idx = legStart; idx < legEnd; idx++) {
-    const dist = Math.abs(run.rootSequence[idx] - targetMidi);
+    const dist = Math.abs((run.rootSequence[idx] + firstNoteOffset) - targetMidi);
     if (dist < bestDist) {
       bestDist = dist;
       bestIndex = idx;
@@ -1860,7 +1929,7 @@ function slotSummaryText(slot) {
 }
 
 function buildPatternOptions(selectedId) {
-  let html = "";
+  let html = '<option value="__clear__"' + (!selectedId ? " selected" : "") + '>Not set</option>';
   allPatterns().forEach(p => {
     html += '<option value="' + p.id + '"' + (p.id === selectedId ? " selected" : "") + '>' + p.name + '</option>';
   });
@@ -1965,16 +2034,18 @@ function renderAll() {
 }
 
 function toggleSlot(i) {
-  // if some other slot is actively playing or paused, ignore taps on any
-  // slot except that one - CSS (.locked / pointer-events:none) already
-  // prevents this click from landing, but guard here too in case that ever
-  // changes, since switching slots mid-run must not be possible
-  if (activeSlotIndex !== null && activeSlotIndex !== i) return;
+  // expand/collapse is always allowed, even on a slot other than the one
+  // currently playing - you can look at (or hide) any slot's pattern/range
+  // editor without disturbing playback. Only selecting a slot (which
+  // redirects the now-playing bar's controls) is restricted while another
+  // slot is active, so that stays guarded below.
   state.expandedSlot = state.expandedSlot === i ? -1 : i;
-  // expanding a slot also selects it (collapsing does not deselect it) -
+  // expanding a slot also selects it, but only when no other slot is active -
   // this is the only way selection and expansion are linked; tapping the
   // rest of the row (selectSlot) never expands
-  if (state.expandedSlot === i) state.selectedSlot = i;
+  if (state.expandedSlot === i && (activeSlotIndex === null || activeSlotIndex === i)) {
+    state.selectedSlot = i;
+  }
   addPatternOpenForSlot = null;
   renderAll();
 }
@@ -2000,7 +2071,35 @@ function onPatternChange(i, value) {
     return;
   }
   addPatternOpenForSlot = null;
+  if (value === "__clear__") {
+    const slot = state.slots[i];
+    // clearing an already-empty slot is a no-op, nothing to warn about
+    if (!slot.patternId && !slot.start && !slot.end) {
+      renderAll();
+      return;
+    }
+    const isPlayingThisSlot = activeSlotIndex === i;
+    const message = isPlayingThisSlot
+      ? "Slot " + (i + 1) + " is currently playing. Clearing it will stop playback and remove its pattern and range."
+      : "This will clear Slot " + (i + 1) + "'s pattern and range. This can't be undone.";
+    showConfirmDialog(message, function() { doClearSlot(i); }, "Clear");
+    // the browser's native <select> now visually shows "Not set" since that's
+    // what the user just picked, but state.slots[i].patternId is untouched
+    // until doClearSlot actually runs (only on confirm) - re-render here so
+    // the dropdown snaps back to the real, still-current pattern immediately,
+    // rather than showing "Not set" while the dialog is still deciding
+    renderAll();
+    return;
+  }
   state.slots[i].patternId = value;
+  saveState();
+  renderAll();
+}
+
+function doClearSlot(i) {
+  const wasPlayingThisSlot = activeSlotIndex === i;
+  state.slots[i] = { patternId: null, start: null, end: null, reverseAtEnd: false };
+  if (wasPlayingThisSlot) stopPlayback();
   saveState();
   renderAll();
 }
@@ -2027,12 +2126,53 @@ function addCustomPattern(i) {
 }
 
 function deletePattern(id) {
+  // if the slot that's actually playing right now is using this pattern,
+  // deleting it would silently clear that slot's pattern mid-run - warn
+  // first rather than let that happen without the person realising. Deleting
+  // a pattern used only by non-playing slots is harmless (they just revert
+  // to "Not set", same as the explicit clear option) and needs no warning.
+  if (activeSlotIndex !== null && state.slots[activeSlotIndex].patternId === id) {
+    showConfirmDialog(
+      "This pattern is in use by Slot " + (activeSlotIndex + 1) + ", which is currently playing. Deleting it will stop that slot and clear its pattern.",
+      function() { doDeletePattern(id); }
+    );
+    return;
+  }
+  doDeletePattern(id);
+}
+
+function doDeletePattern(id) {
+  const wasPlaying = activeSlotIndex !== null && state.slots[activeSlotIndex].patternId === id;
   state.customPatterns = state.customPatterns.filter(p => p.id !== id);
   state.slots.forEach(s => {
     if (s.patternId === id) s.patternId = null;
   });
+  if (wasPlaying) stopPlayback();
   saveState();
   renderAll();
+}
+
+// ---------- Confirm dialog ----------
+let confirmDialogOnConfirm = null;
+
+function showConfirmDialog(message, onConfirm, confirmLabel) {
+  confirmDialogOnConfirm = onConfirm;
+  document.getElementById("confirm-dialog-text").textContent = message;
+  document.getElementById("confirm-dialog-ok").textContent = confirmLabel || "Delete";
+  document.getElementById("confirm-dialog").classList.add("show");
+  document.getElementById("overlay-backdrop").classList.add("show");
+}
+
+function confirmDialogConfirm() {
+  const fn = confirmDialogOnConfirm;
+  closeConfirmDialog();
+  if (fn) fn();
+}
+
+function closeConfirmDialog() {
+  confirmDialogOnConfirm = null;
+  document.getElementById("confirm-dialog").classList.remove("show");
+  document.getElementById("overlay-backdrop").classList.remove("show");
 }
 
 // ---------- Note picker overlay ----------
@@ -2101,12 +2241,14 @@ function closeAllOverlays() {
   document.getElementById("settings-overlay").classList.remove("show");
   document.getElementById("note-picker-overlay").classList.remove("show");
   document.getElementById("colour-picker-overlay").classList.remove("show");
+  document.getElementById("confirm-dialog").classList.remove("show");
   document.getElementById("overlay-backdrop").classList.remove("show");
   if (notePickerOutsideClickHandler) {
     document.removeEventListener("click", notePickerOutsideClickHandler, true);
     notePickerOutsideClickHandler = null;
   }
   rangeTarget = null;
+  confirmDialogOnConfirm = null;
 }
 
 function updateSettingsUI() {
@@ -2486,6 +2628,8 @@ window.openNotePicker = openNotePicker;
 window.pickNoteForRange = pickNoteForRange;
 window.openSettings = openSettings;
 window.closeAllOverlays = closeAllOverlays;
+window.closeConfirmDialog = closeConfirmDialog;
+window.confirmDialogConfirm = confirmDialogConfirm;
 window.setTheme = setTheme;
 window.setPianoOctaves = setPianoOctaves;
 window.openColourPicker = openColourPicker;
