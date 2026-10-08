@@ -117,6 +117,37 @@
     position: relative;
   }
 
+
+  /* ---------- Layout columns ----------
+     Portrait: the two column wrappers are transparent (display:contents), so
+     the page is one column exactly as before. Landscape (screen clearly wider
+     than tall, e.g. Fold 6 cover display on its side): two equal columns,
+     tempo + slots 1-4 on the left; slot 5+, now-playing bar and piano on the
+     right, with the whole page centred vertically. */
+  .app-cols, .col-left, .col-right { display: contents; }
+
+  @media (min-aspect-ratio: 13/10) {
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    h1 { margin: 0 0 4px; }
+    h1 + div { margin: 0 0 8px !important; }
+    .app-cols {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .col-left, .col-right {
+      display: block;
+      min-width: 0;
+    }
+  }
+
   .settings-gear-btn {
     position: absolute;
     right: 0;
@@ -1006,9 +1037,11 @@
 </head>
 <body>
 
-<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.40</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
+<h1>VoiceUp <span style="font-size: 0.6em; color: var(--text-muted); font-weight: 400;">v1.41</span><button class="settings-gear-btn" onclick="openSettings()" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button></h1>
 <div style="text-align: center; font-size: 0.7em; color: var(--text-muted); margin: -8px 0 12px;">&copy; 2026 Howie Yeo</div>
 
+<div class="app-cols">
+<div class="col-left">
 <div class="tempo-block">
   <div style="display: flex; gap: 8px; align-items: center;">
     <button class="stepper-btn tempo-btn" id="tempo-minus" aria-label="Decrease tempo">&minus;</button>
@@ -1024,11 +1057,17 @@
 <div class="now-playing" id="now-playing"></div>
 
 <div id="portrait-slots"></div>
+</div>
+
+<div class="col-right">
+<div id="slots-right"></div>
 
 <div class="position-indicator" id="position-indicator"></div>
 
 <div class="piano-wrap">
   <div class="piano" id="piano"></div>
+</div>
+</div>
 </div>
 
 
@@ -2021,11 +2060,19 @@ function chevronIconSVG(isExpanded) {
 function renderAll() {
   const portrait = document.getElementById("portrait-slots");
 
+  // slots 1-4 go in the left column, the rest in the right column. In
+  // portrait both columns are display:contents, so this is invisible and
+  // the slots simply read 1..N in order.
+  const rightEl = document.getElementById("slots-right");
+  const SLOTS_LEFT_COUNT = 4;
   let pHtml = "";
+  let rHtml = "";
   state.slots.forEach((slot, i) => {
-    pHtml += renderSlotHTML(slot, i, false);
+    if (i < SLOTS_LEFT_COUNT) pHtml += renderSlotHTML(slot, i, false);
+    else rHtml += renderSlotHTML(slot, i, false);
   });
   portrait.innerHTML = pHtml;
+  rightEl.innerHTML = rHtml;
 
   document.getElementById("tempo-val-num").textContent = state.tempo;
 
